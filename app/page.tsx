@@ -14,18 +14,26 @@ export default function Home() {
   const [currentCategory, setCurrentCategory] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Wheel of Fortune State
-  const [isWheelModalOpen, setIsWheelModalOpen] = useState(false);
-  const [wheelEmail, setWheelEmail] = useState("");
-  const [activeDiscount, setActiveDiscount] = useState<any>(null);
-  const [wheelResultMsg, setWheelResultMsg] = useState<any>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const wheelRef = useRef<any>(null);
+
 
   // Product Modal State
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedBox, setSelectedBox] = useState({ price: 0, name: "Sans Boîte", img: "original" });
+  const [modalMainImg, setModalMainImg] = useState("");
+  
+  // Auth State
+  const [user, setUser] = useState<any>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register" | "profile">("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+
+  // Cart State
+  const [cart, setCart] = useState<any[]>([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   
   // Form State
   const [formName, setFormName] = useState("");
@@ -34,6 +42,14 @@ export default function Home() {
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
+  
+  // Toast State
+  const [toast, setToast] = useState<{show: boolean, msg: string, type: "success"|"error"}>({show: false, msg: "", type: "success"});
+
+  const showToast = (msg: string, type: "success"|"error" = "success") => {
+    setToast({ show: true, msg, type });
+    setTimeout(() => setToast({ show: false, msg: "", type: "success" }), 3500);
+  };
 
   useEffect(() => {
     // Hide preloader quickly so user isn't stuck waiting for massive DB fetches
@@ -50,6 +66,19 @@ export default function Home() {
 
         const prodRes = await fetch("/api/products");
         if (prodRes.ok) setProducts(await prodRes.json());
+        
+        const userRes = await fetch("/api/customer/me");
+        if (userRes.ok) {
+            const data = await userRes.json();
+            if (data.user) {
+                setUser(data.user);
+                if (!localStorage.getItem("saoudi_name")) {
+                    setFormName(data.user.name || "");
+                    setFormPhone(data.user.phone || "");
+                    setFormAddress(data.user.address || "");
+                }
+            }
+        }
       } catch (e) {
         console.error("Erreur de chargement.", e);
       } finally {
@@ -58,10 +87,19 @@ export default function Home() {
             document.querySelectorAll('.reveal').forEach((el) => el.classList.add('active'));
         }, 100);
       }
-      
-      const storedDiscount = localStorage.getItem("saoudi_active_discount");
-      if (storedDiscount) setActiveDiscount(JSON.parse(storedDiscount));
     };
+    
+    // Load saved cart and user details
+    const savedCart = localStorage.getItem("saoudi_cart");
+    if (savedCart) {
+      try { setCart(JSON.parse(savedCart)); } catch(e) {}
+    }
+    const sName = localStorage.getItem("saoudi_name");
+    const sPhone = localStorage.getItem("saoudi_phone");
+    const sAddress = localStorage.getItem("saoudi_address");
+    if (sName) setFormName(sName);
+    if (sPhone) setFormPhone(sPhone);
+    if (sAddress) setFormAddress(sAddress);
 
     initApp();
     return () => clearTimeout(forceTimer);
@@ -96,74 +134,18 @@ export default function Home() {
   const filteredProducts = useMemo(() => {
     return products.filter((p: any) => {
       const matchCat = currentCategory === "all" || p.category === currentCategory;
-      const matchSearch =
-        p.title.toLowerCase().includes(searchQuery) ||
-        p.desc.toLowerCase().includes(searchQuery);
+      const matchSearch = p.title.toLowerCase().includes(searchQuery);
       return matchCat && matchSearch;
     });
   }, [products, currentCategory, searchQuery]);
 
-  // Wheel Logic
-  const wheelPrizes = [
-    { label: "-10%", type: "percent", val: 10 },
-    { label: "-5 DT", type: "fixed", val: 5 },
-    { label: "Liv. Gratuite", type: "shipping", val: 0 },
-    { label: "Perdu", type: "none", val: 0 },
-    { label: "-15%", type: "percent", val: 15 },
-    { label: "Cadeau", type: "gift", val: 0 },
-  ];
 
-  const spinWheel = () => {
-    if (isSpinning) return;
-    const emailInput = wheelEmail.trim().toLowerCase();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailInput || !emailRegex.test(emailInput)) {
-      alert("Veuillez entrer une adresse email complète et valide.");
-      return;
-    }
-    const spunEmails = JSON.parse(localStorage.getItem("saoudi_spun_emails") || "[]");
-    if (spunEmails.includes(emailInput)) {
-      alert("Email déjà utilisé !");
-      return;
-    }
-
-    setIsSpinning(true);
-    spunEmails.push(emailInput);
-    localStorage.setItem("saoudi_spun_emails", JSON.stringify(spunEmails));
-
-    const randomSlice = Math.floor(Math.random() * 6);
-    const totalRotation = 360 - randomSlice * 60 - 30 + 360 * 5;
-    
-    if (wheelRef.current) {
-        wheelRef.current.style.transform = `rotate(${totalRotation}deg)`;
-    }
-
-    setTimeout(() => {
-      const won = wheelPrizes[randomSlice];
-      if (won.type === "none") {
-        setWheelResultMsg(<span className="text-red-500">Oh non ! Pas de chance cette fois. 😢</span>);
-      } else {
-        setWheelResultMsg(
-          <span className="text-green-500">
-            Félicitations !<br />
-            Vous gagnez : <span className="text-gold text-3xl block mt-2">{won.label}</span>
-          </span>
-        );
-        localStorage.setItem("saoudi_active_discount", JSON.stringify(won));
-        setActiveDiscount(won);
-      }
-      setIsSpinning(false);
-    }, 4000);
-  };
-
-  const closeWheelModal = () => {
-    setIsWheelModalOpen(false);
-  };
 
   // Product Modal Logic
-  const openModal = (product) => {
+  const openModal = (product: any) => {
     setSelectedProduct(product);
     setSelectedBox({ price: 0, name: "Sans Boîte", img: "original" });
+    setModalMainImg(product.img);
     setIsProductModalOpen(true);
     document.body.style.overflow = "hidden";
   };
@@ -174,7 +156,7 @@ export default function Home() {
     document.body.style.overflow = "auto";
   };
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: any) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
@@ -186,48 +168,113 @@ export default function Home() {
     setIsZooming(false);
   };
 
-  // Order Calculation
-  const subtotal = selectedProduct ? selectedProduct.price + selectedBox.price : 0;
-  let shipping = selectedProduct && selectedProduct.freeShipping ? 0 : 8.5;
-  let discountVal = 0;
+  // Cart Logic
+  const addToCart = () => {
+    if (!selectedProduct) return;
+    const newItem = {
+      id: Math.random().toString(36).substring(7),
+      product: selectedProduct,
+      box: selectedBox,
+      price: selectedProduct.price + selectedBox.price
+    };
+    const newCart = [...cart, newItem];
+    setCart(newCart);
+    localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
+    closeModal();
+    setIsCartOpen(true);
+  };
 
-  if (activeDiscount) {
-    if (activeDiscount.type === "percent") discountVal = subtotal * (activeDiscount.val / 100);
-    else if (activeDiscount.type === "fixed") discountVal = activeDiscount.val;
-    else if (activeDiscount.type === "shipping") shipping = 0;
-  }
-  const total = Math.max(0, subtotal + shipping - discountVal);
+  const removeFromCart = (id: string) => {
+    const newCart = cart.filter(item => item.id !== id);
+    setCart(newCart);
+    localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
+  };
 
-  const submitOrder = () => {
-    if (!activeDiscount && !sessionStorage.getItem("saoudi_wheel_prompted")) {
-      sessionStorage.setItem("saoudi_wheel_prompted", "true");
-      setIsWheelModalOpen(true);
-      return;
-    }
-    
+  const cartSubtotal = cart.reduce((sum, item) => sum + item.price, 0);
+  const cartShipping = cart.length > 0 ? (cart.some(item => item.product.freeShipping) ? 0 : 8.5) : 0;
+  const cartTotal = cartSubtotal + cartShipping;
+
+  const submitCartOrder = () => {
+    if (cart.length === 0) return;
     if (!formName || !formPhone || !formAddress) {
-      alert("S'il vous plaît, remplissez toutes vos informations.");
+      showToast("S'il vous plaît, remplissez toutes vos informations de livraison.", "error");
       return;
     }
 
-    let promoMsg = "";
-    if (activeDiscount) {
-      promoMsg = `*Wheel Prize :* ${activeDiscount.label}%0A`;
-    }
-
-    let boxLine = selectedProduct?.allowBoxes !== false ? `%0A*Emballage:* ${selectedBox.name}` : "";
-    let msg = `*🛍️ NOUVELLE COMMANDE* %0A%0A*Produit:* ${selectedProduct.title}${boxLine}%0A*Prix total (Articles):* ${subtotal.toFixed(
-      1
-    )} DT%0A*Livraison:* ${shipping === 0 ? "GRATUITE" : "8.5 DT"}%0A`;
+    let msg = `*🛍️ NOUVELLE COMMANDE* %0A%0A`;
+    cart.forEach((item, index) => {
+      let boxLine = item.product.allowBoxes !== false ? ` (Boîte: ${item.box.name})` : "";
+      msg += `*${index + 1}.* ${item.product.title}${boxLine} - ${item.price} DT%0A`;
+    });
     
-    if (promoMsg) msg += promoMsg;
+    msg += `%0A*Sous-total:* ${cartSubtotal.toFixed(1)} DT%0A`;
+    msg += `*Livraison:* ${cartShipping === 0 ? "GRATUITE" : "8.5 DT"}%0A`;
+    msg += `*TOTAL À PAYER:* ${cartTotal.toFixed(1)} DT%0A%0A`;
     
-    msg += `*TOTAL À PAYER:* ${total.toFixed(
-      1
-    )} DT%0A%0A*📦 Informations Client:*%0A*Nom:* ${formName}%0A*Téléphone:* ${formPhone}%0A*Adresse:* ${formAddress}`;
+    msg += `*📦 Informations Client:*%0A*Nom:* ${formName}%0A*Téléphone:* ${formPhone}%0A*Adresse:* ${formAddress}`;
 
     window.open(`https://wa.me/21655211908?text=${msg}`, "_blank");
-    setTimeout(closeModal, 1000);
+    
+    // Clear cart after sending
+    setCart([]);
+    localStorage.removeItem("saoudi_cart");
+    
+    // Save form data so they don't have to type it again next time!
+    localStorage.setItem("saoudi_name", formName);
+    localStorage.setItem("saoudi_phone", formPhone);
+    localStorage.setItem("saoudi_address", formAddress);
+    
+    setIsCartOpen(false);
+  };
+
+  // Auth Handlers
+  const handleAuthSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthLoading(true);
+    try {
+      if (authMode === "register") {
+        const res = await fetch("/api/customer/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: authName, email: authEmail, password: authPassword }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUser(data.user);
+          setFormName(data.user.name);
+          setIsAuthModalOpen(false);
+          showToast("Compte créé avec succès !", "success");
+        } else {
+          showToast(data.error, "error");
+        }
+      } else {
+        const res = await fetch("/api/customer/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: authEmail, password: authPassword }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setUser(data.user);
+          if (data.user.name) setFormName(data.user.name);
+          if (data.user.phone) setFormPhone(data.user.phone);
+          if (data.user.address) setFormAddress(data.user.address);
+          setIsAuthModalOpen(false);
+          showToast("Connexion réussie !", "success");
+        } else {
+          showToast(data.error, "error");
+        }
+      }
+    } catch (err) {
+      showToast("Une erreur s'est produite.", "error");
+    }
+    setAuthLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/customer/logout", { method: "POST" });
+    setUser(null);
+    setIsAuthModalOpen(false);
   };
 
   const categoryTitles = {
@@ -242,6 +289,14 @@ export default function Home() {
   return (
     <div className={`relative scroll-smooth text-gray-900 bg-[#FDFBF7] dark:bg-gray-900 dark:text-gray-100 ${loading ? 'overflow-hidden' : ''}`}>
       
+      {/* CUSTOM TOAST NOTIFICATION */}
+      <div 
+        className={`fixed top-5 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform ${toast.show ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'} flex items-center space-x-3 px-6 py-3 rounded-full shadow-2xl ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#25D366] text-white'}`}
+      >
+        <i className={`fas ${toast.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`}></i>
+        <span className="font-bold text-sm tracking-wide">{toast.msg}</span>
+      </div>
+
       <style dangerouslySetInnerHTML={{__html: `
         body { font-family: 'Lato', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
         h1, h2, h3, .brand-font { font-family: 'Playfair Display', serif; }
@@ -274,6 +329,12 @@ export default function Home() {
             100% { left: 100%; }
         }
         .animate-loader { animation: loader-slide 1.5s ease-in-out infinite; }
+
+        @keyframes slide-in-right {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-slide-in-right { animation: slide-in-right 0.3s ease-out forwards; }
       `}} />
 
       {/* LUXURY PRELOADER */}
@@ -287,87 +348,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* FLOATING WHEEL BUTTON */}
-      <button
-        onClick={() => setIsWheelModalOpen(true)}
-        className="fixed bottom-6 left-6 z-40 hidden dark:flex bg-gold text-gray-900 p-4 rounded-full shadow-2xl hover:scale-110 transition-transform items-center justify-center animate-bounce border-2 border-yellow-200"
-        title="Bonus !"
-      >
-        <i className="fas fa-gift text-2xl"></i>
-      </button>
 
-      {/* WHEEL OF FORTUNE MODAL */}
-      {isWheelModalOpen && (
-        <div className="fixed inset-0 z-[60] bg-black/95 flex items-center justify-center p-4 transition-opacity">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-md p-6 md:p-8 text-center relative overflow-hidden border border-gold">
-            <button onClick={closeWheelModal} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition z-10">
-              <i className="fas fa-times text-xl"></i>
-            </button>
-            <h2 className="text-3xl brand-font text-gold mb-2">Un Cadeau Avant d'Acheter ?</h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-8">
-              Entrez votre adresse email complète pour tourner la roue. Une seule chance par client !
-            </p>
-            <div className="relative w-64 h-64 mx-auto mb-8 shadow-2xl rounded-full">
-              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 z-20 text-red-600 text-5xl filter drop-shadow-md">
-                <i className="fas fa-caret-down"></i>
-              </div>
-              <div
-                ref={wheelRef}
-                className="w-full h-full rounded-full border-4 border-gold wheel-bg relative overflow-hidden transition-transform duration-[4000ms] ease-out"
-              >
-                <div className="absolute w-full h-full flex justify-center text-gray-900 font-bold text-sm" style={{ transform: "rotate(30deg)" }}>
-                  <span className="mt-4">-10%</span>
-                </div>
-                <div className="absolute w-full h-full flex justify-center text-white font-bold text-sm" style={{ transform: "rotate(90deg)" }}>
-                  <span className="mt-4">-5 DT</span>
-                </div>
-                <div className="absolute w-full h-full flex justify-center text-gray-900 font-bold text-xs" style={{ transform: "rotate(150deg)" }}>
-                  <span className="mt-4">Liv. 0 DT</span>
-                </div>
-                <div className="absolute w-full h-full flex justify-center text-white font-bold text-sm" style={{ transform: "rotate(210deg)" }}>
-                  <span className="mt-4">Perdu</span>
-                </div>
-                <div className="absolute w-full h-full flex justify-center text-gray-900 font-bold text-sm" style={{ transform: "rotate(270deg)" }}>
-                  <span className="mt-4">-15%</span>
-                </div>
-                <div className="absolute w-full h-full flex justify-center text-white font-bold text-sm" style={{ transform: "rotate(330deg)" }}>
-                  <span className="mt-4">Cadeau</span>
-                </div>
-                <div className="absolute inset-0 m-auto w-12 h-12 bg-white rounded-full z-10 border-2 border-gray-800 flex items-center justify-center font-bold text-gold text-lg brand-font shadow-inner">
-                  SA
-                </div>
-              </div>
-            </div>
-            
-            {!wheelResultMsg ? (
-              <div>
-                <input
-                  type="email"
-                  value={wheelEmail}
-                  onChange={(e) => setWheelEmail(e.target.value)}
-                  placeholder="Ex: nom@email.com"
-                  className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 dark:text-white p-3 rounded-md mb-4 outline-none focus:border-gold transition"
-                />
-                <button
-                  onClick={spinWheel}
-                  disabled={isSpinning}
-                  className="w-full bg-gray-900 dark:bg-gold text-white dark:text-gray-900 font-bold py-3 rounded-md hover:opacity-90 transition shadow-md uppercase tracking-wider text-sm disabled:opacity-50"
-                >
-                  {isSpinning ? "En cours..." : "Tourner la roue !"}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-4 text-center">
-                <div className="text-xl font-bold mb-2">{wheelResultMsg}</div>
-                <p className="text-sm text-gray-500">La remise sera automatiquement appliquée dans votre commande.</p>
-                <button onClick={closeWheelModal} className="mt-4 bg-gold text-gray-900 px-8 py-3 rounded-full text-sm font-bold hover:opacity-90 transition uppercase">
-                  Continuer
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Mobile Sidebar */}
       {isSidebarOpen && (
@@ -427,6 +408,9 @@ export default function Home() {
           </div>
 
           <div className="flex items-center space-x-4">
+            <button onClick={() => { setAuthMode(user ? "profile" : "login"); setIsAuthModalOpen(true); }} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl">
+              <i className="fas fa-user-circle"></i>
+            </button>
             <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="hidden sm:flex bg-[#25D366] text-white px-5 py-2 uppercase text-sm tracking-widest hover:bg-green-600 transition rounded-full shadow-md items-center space-x-2">
               <i className="fab fa-whatsapp text-lg"></i>
               <span className="font-bold">Commander</span>
@@ -520,7 +504,7 @@ export default function Home() {
             {/* RIGHT GRID */}
             <div className="w-full md:w-3/4">
               <div className="mb-8 flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-3">
-                <h2 className="text-2xl md:text-3xl brand-font text-gray-900 dark:text-white">{categoryTitles[currentCategory]}</h2>
+                <h2 className="text-2xl md:text-3xl brand-font text-gray-900 dark:text-white">{categoryTitles[currentCategory as keyof typeof categoryTitles]}</h2>
                 <span className="text-gray-500 text-xs tracking-widest uppercase">{filteredProducts.length} Produit{filteredProducts.length !== 1 ? "s" : ""}</span>
               </div>
 
@@ -631,23 +615,45 @@ export default function Home() {
               <i className="fas fa-times text-xl w-6 h-6 flex items-center justify-center"></i>
             </button>
 
-            <div
-              className="md:w-1/2 bg-[#FDFBF7] dark:bg-gray-900 flex items-center justify-center p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700 relative overflow-hidden cursor-crosshair group"
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-            >
-              <img
-                src={selectedBox.img !== "original" ? selectedBox.img : selectedProduct.img}
-                className="max-w-full h-auto max-h-[40vh] md:max-h-full rounded-sm shadow-sm object-contain transition-transform duration-200"
-                style={{
-                  transformOrigin: isZooming ? `${mousePos.x}% ${mousePos.y}%` : "center center",
-                  transform: isZooming ? "scale(2.2)" : "scale(1)",
-                }}
-                alt="Product"
-              />
-              <div className="absolute bottom-4 left-4 bg-black/60 text-white text-[10px] uppercase tracking-widest px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                <i className="fas fa-search-plus mr-1"></i> VIP Zoom
+            <div className="md:w-1/2 bg-[#FDFBF7] dark:bg-gray-900 flex flex-col p-4 md:p-6 border-b md:border-b-0 md:border-r border-gray-100 dark:border-gray-700">
+              <div
+                className="flex-grow flex items-center justify-center relative overflow-hidden cursor-crosshair group mb-4"
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+              >
+                <img
+                  src={selectedBox.img !== "original" ? selectedBox.img : modalMainImg}
+                  className="max-w-full h-auto max-h-[40vh] md:max-h-[60vh] rounded-sm shadow-sm object-contain transition-transform duration-200"
+                  style={{
+                    transformOrigin: isZooming ? `${mousePos.x}% ${mousePos.y}%` : "center center",
+                    transform: isZooming ? "scale(2.2)" : "scale(1)",
+                  }}
+                  alt="Product"
+                />
+                <div className="absolute bottom-4 left-4 bg-black/60 text-white text-[10px] uppercase tracking-widest px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <i className="fas fa-search-plus mr-1"></i> VIP Zoom
+                </div>
               </div>
+
+              {selectedProduct.gallery && selectedProduct.gallery.length > 0 && (
+                <div className="flex space-x-2 overflow-x-auto pb-2">
+                  <div 
+                    onClick={() => { setModalMainImg(selectedProduct.img); setSelectedBox({ ...selectedBox, img: "original" }); }}
+                    className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === selectedProduct.img && selectedBox.img === "original" ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
+                  >
+                    <img src={selectedProduct.img} className="w-16 h-16 object-cover rounded-sm shadow-sm" alt="Thumbnail" />
+                  </div>
+                  {selectedProduct.gallery.map((gImg: string, idx: number) => (
+                    <div 
+                      key={idx}
+                      onClick={() => { setModalMainImg(gImg); setSelectedBox({ ...selectedBox, img: "original" }); }}
+                      className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === gImg && selectedBox.img === "original" ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
+                    >
+                      <img src={gImg} className="w-16 h-16 object-cover rounded-sm shadow-sm" alt={`Thumbnail ${idx}`} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="md:w-1/2 p-4 md:p-8 flex flex-col">
@@ -697,41 +703,169 @@ export default function Home() {
                   </div>
                 )}
 
-                <div>
-                  <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 dark:text-white p-2 rounded-sm focus:border-gold outline-none" />
-                </div>
-                <div>
-                  <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="Téléphone" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 dark:text-white p-2 rounded-sm focus:border-gold outline-none" />
-                </div>
-                <div>
-                  <textarea value={formAddress} onChange={e => setFormAddress(e.target.value)} placeholder="Adresse complète" rows={2} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 dark:text-white p-2 rounded-sm focus:border-gold outline-none"></textarea>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-sm border border-gray-200 dark:border-gray-600 mt-4">
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-sm border border-gray-200 dark:border-gray-600 mt-auto">
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-2">
                     <span>Prix du Produit <span className="italic text-gray-400">{selectedProduct.allowBoxes !== false ? (selectedBox.price > 0 ? `(+ ${selectedBox.name})` : "(Sans Boîte)") : ""}</span></span>
-                    <span className="font-semibold">{subtotal.toFixed(1)} DT</span>
+                    <span className="font-semibold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
                   </div>
-                  <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-2">
-                    <span>Frais de livraison</span>
-                    <span className={`font-semibold ${shipping === 0 ? "text-green-400" : ""}`}>{shipping === 0 ? (activeDiscount?.type === "shipping" ? "0 DT (Via Roue)" : "0 DT (Offert)") : "8.5 DT"}</span>
-                  </div>
-                  {activeDiscount && activeDiscount.type !== "none" && (
-                    <div className="flex justify-between text-xs text-green-600 dark:text-green-400 font-bold mb-2">
-                      <span>Remise ({activeDiscount.label})</span>
-                      <span>{activeDiscount.type === "gift" ? "Cadeau Inclus" : `-${discountVal.toFixed(1)} DT`}</span>
-                    </div>
-                  )}
                   <div className="flex justify-between font-bold text-lg text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-3 mt-1">
-                    <span>Total</span>
-                    <span className="text-gold">{total.toFixed(1)} DT</span>
+                    <span>Total de l'article</span>
+                    <span className="text-gold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
                   </div>
                 </div>
-                <button type="button" onClick={submitOrder} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-sm hover:bg-green-600 transition shadow-md flex justify-center items-center space-x-2 mt-4">
-                  <i className="fab fa-whatsapp text-xl"></i><span>Confirmer la commande</span>
+                <button type="button" onClick={addToCart} className="w-full bg-gray-900 dark:bg-gold text-white dark:text-gray-900 font-bold py-3 rounded-sm hover:opacity-90 transition shadow-md flex justify-center items-center space-x-2 mt-4 uppercase tracking-wider text-sm">
+                  <i className="fas fa-shopping-cart text-lg"></i><span>Ajouter au panier</span>
                 </button>
               </form>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* FLOATING CART BUTTON */}
+      <button
+        onClick={() => setIsCartOpen(true)}
+        className="fixed bottom-6 right-6 z-40 bg-gray-900 dark:bg-gold text-white dark:text-gray-900 p-4 rounded-full shadow-2xl hover:scale-110 transition-transform items-center justify-center flex border-2 border-transparent dark:border-yellow-200"
+        title="Panier"
+      >
+        <i className="fas fa-shopping-cart text-xl"></i>
+        {cart.length > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center shadow-md">
+            {cart.length}
+          </span>
+        )}
+      </button>
+
+      {/* CART SIDEBAR / MODAL */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-[90] bg-black/60 flex justify-end transition-opacity">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-md h-full shadow-2xl flex flex-col animate-slide-in-right relative">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
+              <h2 className="text-xl brand-font font-bold flex items-center space-x-2">
+                <i className="fas fa-shopping-cart text-gold"></i>
+                <span>Mon Panier</span>
+              </h2>
+              <button onClick={() => setIsCartOpen(false)} className="text-gray-500 hover:text-red-500 transition">
+                <i className="fas fa-times text-xl"></i>
+              </button>
+            </div>
+
+            <div className="flex-grow overflow-y-auto p-4 space-y-4">
+              {cart.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
+                  <i className="fas fa-shopping-basket text-6xl text-gray-300 dark:text-gray-600"></i>
+                  <p>Votre panier est vide.</p>
+                  <button onClick={() => setIsCartOpen(false)} className="px-6 py-2 bg-gold text-gray-900 rounded-full font-bold text-sm uppercase">Continuer mes achats</button>
+                </div>
+              ) : (
+                cart.map(item => (
+                  <div key={item.id} className="flex space-x-4 border border-gray-100 dark:border-gray-700 p-2 rounded-md relative group bg-white dark:bg-gray-800 shadow-sm">
+                    <img src={item.product.img} className="w-20 h-20 object-cover rounded-sm border border-gray-200" alt={item.product.title} />
+                    <div className="flex-grow flex flex-col justify-center">
+                      <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{item.product.title}</h4>
+                      {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">Boîte: {item.box.name}</span>}
+                      <span className="text-gold font-bold mt-1">{item.price.toFixed(1)} DT</span>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition">
+                      <i className="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                ))
+              )}
+
+              {cart.length > 0 && (
+                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm uppercase tracking-wider">Informations de livraison</h3>
+                  <div className="space-y-3">
+                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                    <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="Téléphone" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                    <textarea value={formAddress} onChange={e => setFormAddress(e.target.value)} placeholder="Adresse complète" rows={2} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold"></textarea>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {cart.length > 0 && (
+              <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                  <span>Sous-total</span>
+                  <span>{cartSubtotal.toFixed(1)} DT</span>
+                </div>
+                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
+                  <span>Frais de livraison</span>
+                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? "GRATUITE" : "8.5 DT"}</span>
+                </div>
+                <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-white mb-4 border-t border-gray-200 dark:border-gray-700 pt-2">
+                  <span>Total</span>
+                  <span className="text-gold">{cartTotal.toFixed(1)} DT</span>
+                </div>
+                <button onClick={submitCartOrder} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-md hover:bg-green-600 transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm">
+                  <i className="fab fa-whatsapp text-lg"></i><span>Commander ({cart.length})</span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* AUTH MODAL */}
+      {isAuthModalOpen && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 transition-opacity">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-sm p-6 relative">
+            <button onClick={() => setIsAuthModalOpen(false)} className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition">
+              <i className="fas fa-times text-xl"></i>
+            </button>
+            
+            {authMode === "profile" && user ? (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-gold text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                  {user.name ? user.name.charAt(0).toUpperCase() : <i className="fas fa-user"></i>}
+                </div>
+                <h2 className="text-2xl brand-font font-bold mb-1">{user.name}</h2>
+                <p className="text-sm text-gray-500 mb-6">{user.email}</p>
+                <div className="text-left bg-gray-50 dark:bg-gray-700 p-4 rounded-md mb-6 text-sm">
+                  <p><strong>Téléphone :</strong> {user.phone || 'Non renseigné'}</p>
+                  <p className="mt-2"><strong>Adresse :</strong> {user.address || 'Non renseignée'}</p>
+                </div>
+                <button onClick={handleLogout} className="w-full border-2 border-red-500 text-red-500 py-2 rounded-full font-bold hover:bg-red-500 hover:text-white transition">
+                  Se déconnecter
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleAuthSubmit} className="space-y-4">
+                <h2 className="text-2xl brand-font font-bold mb-6 text-center text-gold">
+                  {authMode === "login" ? "Connexion" : "Créer un compte"}
+                </h2>
+                
+                {authMode === "register" && (
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Nom Complet</label>
+                    <input type="text" required value={authName} onChange={e => setAuthName(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-md outline-none focus:border-gold" />
+                  </div>
+                )}
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                  <input type="email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-md outline-none focus:border-gold" />
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Mot de passe</label>
+                  <input type="password" required value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-2 rounded-md outline-none focus:border-gold" />
+                </div>
+                
+                <button type="submit" disabled={authLoading} className="w-full bg-gold text-gray-900 font-bold py-3 rounded-full hover:opacity-90 transition mt-4 disabled:opacity-50">
+                  {authLoading ? "Patientez..." : (authMode === "login" ? "Se connecter" : "S'inscrire")}
+                </button>
+                
+                <div className="text-center mt-4 text-sm text-gray-500">
+                  {authMode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?"}
+                  <button type="button" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")} className="text-gold font-bold ml-2 hover:underline">
+                    {authMode === "login" ? "Créer un compte" : "Se connecter"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

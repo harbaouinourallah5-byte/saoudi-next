@@ -18,11 +18,23 @@ export default function AdminPage() {
     const [prodCategory, setProdCategory] = useState("Montres");
     const [prodDesc, setProdDesc] = useState("");
     const [prodImg, setProdImg] = useState("");
+    const [prodGallery, setProdGallery] = useState<string[]>([]);
     const [inStock, setInStock] = useState(true);
     const [freeShipping, setFreeShipping] = useState(false);
     const [allowBoxes, setAllowBoxes] = useState(true);
     const [boxQuantity, setBoxQuantity] = useState(0);
     const [boxes, setBoxes] = useState<{name: string, price: string, img: string}[]>([]);
+    
+    // State for editing mode
+    const [editingProductTitle, setEditingProductTitle] = useState("");
+
+    // Toast State
+    const [toast, setToast] = useState<{show: boolean, msg: string, type: "success"|"error"}>({show: false, msg: "", type: "success"});
+
+    const showToast = (msg: string, type: "success"|"error" = "success") => {
+        setToast({ show: true, msg, type });
+        setTimeout(() => setToast({ show: false, msg: "", type: "success" }), 3500);
+    };
 
     useEffect(() => {
         // No persistent token loading. User must log in every time.
@@ -42,17 +54,10 @@ export default function AdminPage() {
                 setIsLoggedIn(true);
                 loadAdminProducts(data.token);
             } else {
-                alert("Nom d'utilisateur ou mot de passe incorrect !");
+                showToast("Nom d'utilisateur ou mot de passe incorrect !", "error");
             }
         } catch(e) {
-            alert("Erreur de connexion au serveur !");
-        }
-    };
-            } else {
-                alert("Nom d'utilisateur ou mot de passe incorrect !");
-            }
-        } catch(e) {
-            alert("Erreur de connexion au serveur !");
+            showToast("Erreur de connexion au serveur !", "error");
         }
     };
 
@@ -75,6 +80,23 @@ export default function AdminPage() {
                 }
             };
             reader.readAsDataURL(file);
+        }
+    };
+
+    const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length > 0) {
+            Promise.all(files.map(file => {
+                return new Promise<string>((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        resolve(event.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            })).then(base64Images => {
+                setProdGallery(prev => [...prev, ...base64Images].slice(0, 4)); // max 4 photos for gallery
+            });
         }
     };
 
@@ -118,7 +140,7 @@ export default function AdminPage() {
         e.preventDefault();
         const priceNum = parseFloat(prodPrice);
         if (!prodName || isNaN(priceNum) || !prodDesc) {
-            alert("Veuillez remplir le nom, le prix et la description du produit.");
+            showToast("Veuillez remplir le nom, le prix et la description du produit.", "error");
             return;
         }
 
@@ -131,8 +153,11 @@ export default function AdminPage() {
         }
 
         try {
-            const productRes = await fetch('/api/products', {
-                method: 'POST',
+            const url = editingProductTitle ? `/api/products/${encodeURIComponent(editingProductTitle)}` : '/api/products';
+            const method = editingProductTitle ? 'PUT' : 'POST';
+
+            const productRes = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + authToken
@@ -146,17 +171,20 @@ export default function AdminPage() {
                     freeShipping,
                     allowBoxes,
                     boxes: productBoxes,
-                    img: prodImg || 'assets/logo.jpg'
+                    img: prodImg || 'assets/logo.jpg',
+                    gallery: prodGallery
                 })
             });
 
             if (productRes.ok) {
-                alert("Produit enregistré avec succès ! 🎉");
+                showToast(`Produit ${editingProductTitle ? 'modifié' : 'enregistré'} avec succès ! 🎉`, "success");
+                setEditingProductTitle("");
                 setProdName("");
                 setProdPrice("");
                 setProdDesc("");
                 setProdCategory("Montres");
                 setProdImg("");
+                setProdGallery([]);
                 setInStock(true);
                 setFreeShipping(false);
                 setAllowBoxes(true);
@@ -166,10 +194,10 @@ export default function AdminPage() {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             } else {
                 const errText = await productRes.text();
-                alert("Erreur lors de l'enregistrement du produit: " + errText);
+                showToast("Erreur lors de l'enregistrement du produit: " + errText, "error");
             }
         } catch(e: any) {
-            alert("Erreur de connexion au serveur local: " + e.message);
+            showToast("Erreur de connexion au serveur local: " + e.message, "error");
         }
     };
 
@@ -189,6 +217,34 @@ export default function AdminPage() {
         }
     };
 
+    const editProduct = (product: any) => {
+        setEditingProductTitle(product.title);
+        setProdName(product.title);
+        setProdPrice(product.price.toString());
+        setProdDesc(product.desc);
+        setProdCategory(product.category || "Montres");
+        setProdImg(product.img || "");
+        setProdGallery(product.gallery || []);
+        setInStock(product.inStock !== false);
+        setFreeShipping(product.freeShipping === true);
+        
+        if (product.allowBoxes !== false && product.boxes && product.boxes.length > 0) {
+            setAllowBoxes(true);
+            setBoxQuantity(product.boxes.length);
+            setBoxes(product.boxes.map((b: any) => ({
+                name: b.name,
+                price: b.price.toString(),
+                img: b.img || ""
+            })));
+        } else {
+            setAllowBoxes(false);
+            setBoxQuantity(0);
+            setBoxes([]);
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
     const deleteProduct = async (title: string) => {
         if (window.confirm("Voulez-vous vraiment supprimer ce produit ?")) {
             try {
@@ -205,6 +261,15 @@ export default function AdminPage() {
 
     return (
         <div className="text-gray-800 font-sans min-h-screen bg-[#050505]">
+            
+            {/* CUSTOM TOAST NOTIFICATION */}
+            <div 
+                className={`fixed top-5 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 transform ${toast.show ? 'translate-y-0 opacity-100' : '-translate-y-10 opacity-0 pointer-events-none'} flex items-center space-x-3 px-6 py-3 rounded-full shadow-2xl ${toast.type === 'error' ? 'bg-red-500 text-white' : 'bg-[#25D366] text-white'}`}
+            >
+                <i className={`fas ${toast.type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'} text-lg`}></i>
+                <span className="font-bold text-sm tracking-wide">{toast.msg}</span>
+            </div>
+
             {!isLoggedIn && (
                 <div id="login-overlay" className="fixed inset-0 bg-black z-[100] flex items-center justify-center bg-[url('/assets/bg-pattern.png')] bg-cover bg-center">
                     <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
@@ -275,7 +340,26 @@ export default function AdminPage() {
                 <div className="w-full md:w-3/4">
                     
                     <div className="flex items-center justify-between mb-6">
-                        <h2 id="ajouter" className="text-2xl font-bold text-gray-800">Créer un Nouveau Produit</h2>
+                        <h2 id="ajouter" className="text-2xl font-bold text-gray-800">
+                            {editingProductTitle ? `Modifier: ${editingProductTitle}` : 'Créer un Nouveau Produit'}
+                        </h2>
+                        {editingProductTitle && (
+                            <button 
+                                type="button" 
+                                onClick={() => {
+                                    setEditingProductTitle("");
+                                    setProdName("");
+                                    setProdPrice("");
+                                    setProdDesc("");
+                                    setProdImg("");
+                                    setBoxes([]);
+                                    setBoxQuantity(0);
+                                }}
+                                className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 transition"
+                            >
+                                Annuler la modification
+                            </button>
+                        )}
                     </div>
 
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-4xl mb-12">
@@ -350,6 +434,37 @@ export default function AdminPage() {
                                         </>
                                     )}
                                 </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Galerie d'images secondaires (Optionnel, Max 4)</label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition cursor-pointer relative overflow-hidden bg-white">
+                                    <input 
+                                        type="file" 
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleGalleryImagesChange}
+                                    />
+                                    <i className="fas fa-images text-3xl mb-3 text-yellow-500"></i>
+                                    <span className="text-sm">Cliquez pour ajouter d'autres photos</span>
+                                </div>
+                                {prodGallery.length > 0 && (
+                                    <div className="flex space-x-4 mt-4 overflow-x-auto p-2 bg-gray-50 border rounded-md">
+                                        {prodGallery.map((img, idx) => (
+                                            <div key={idx} className="relative group shrink-0">
+                                                <img src={img} className="h-20 w-20 object-cover rounded shadow-sm border border-gray-200" alt={`Gallery ${idx}`} />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setProdGallery(prev => prev.filter((_, i) => i !== idx))}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 opacity-0 group-hover:opacity-100 transition z-10"
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex flex-col sm:flex-row sm:space-x-8 space-y-4 sm:space-y-0 p-4 bg-gray-50 rounded-md border border-gray-200">
@@ -455,7 +570,7 @@ export default function AdminPage() {
 
                             <div className="flex items-center space-x-4 pt-6 border-t border-gray-100">
                                 <button type="submit" className="bg-yellow-500 text-gray-900 font-bold py-4 px-8 rounded-md hover:bg-yellow-600 transition shadow-lg text-lg uppercase tracking-wider w-full flex items-center justify-center space-x-2">
-                                    <i className="fas fa-save"></i> <span>Enregistrer le Produit</span>
+                                    <i className="fas fa-save"></i> <span>{editingProductTitle ? 'Mettre à jour' : 'Enregistrer le Produit'}</span>
                                 </button>
                             </div>
                         </form>
@@ -506,10 +621,13 @@ export default function AdminPage() {
                                             </div>
                                         </td>
                                         <td className="p-4 text-right space-x-2">
-                                            <button onClick={() => toggleStock(p.title, p.inStock !== false)} className="text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded text-sm mr-2">
-                                                <i className="fas fa-exchange-alt"></i> Stock
+                                            <button onClick={() => editProduct(p)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded text-sm mr-2 transition">
+                                                <i className="fas fa-edit"></i>
                                             </button>
-                                            <button onClick={() => deleteProduct(p.title)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded text-sm">
+                                            <button onClick={() => toggleStock(p.title, p.inStock !== false)} className="text-gray-500 hover:text-gray-700 bg-gray-100 p-2 rounded text-sm mr-2 transition">
+                                                <i className="fas fa-exchange-alt"></i>
+                                            </button>
+                                            <button onClick={() => deleteProduct(p.title)} className="text-red-500 hover:text-red-700 bg-red-50 p-2 rounded text-sm transition">
                                                 <i className="fas fa-trash"></i>
                                             </button>
                                         </td>

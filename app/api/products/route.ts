@@ -83,6 +83,13 @@ export async function POST(request: Request) {
             }
         }
         
+        if (product.gallery && Array.isArray(product.gallery)) {
+            for (let i = 0; i < product.gallery.length; i++) {
+                if (product.gallery[i] && product.gallery[i].startsWith('data:image')) {
+                    product.gallery[i] = saveBase64Image(product.gallery[i]);
+                }
+            }
+        }
         await db.collection('products').insertOne(product);
         return NextResponse.json({ success: true });
     } catch (e: any) {
