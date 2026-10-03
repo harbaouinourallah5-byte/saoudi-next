@@ -685,6 +685,33 @@ export default function Home() {
               <hr className="border-gray-100 dark:border-gray-700 mb-4 md:mb-6" />
 
               <form className="space-y-3 md:space-y-4 flex-grow">
+                {selectedProduct.allowBoxes !== false && (
+                  <div>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Choix d'emballage</label>
+                    <div className="grid grid-cols-3 gap-2 mb-2">
+                      <div
+                        onClick={() => setSelectedBox({ price: 0, name: "Sans Boîte", img: "original" })}
+                        className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === 0 ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
+                      >
+                        <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.price === 0 ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
+                        <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">Sans Boîte</div>
+                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 DT</div>
+                      </div>
+                      {(selectedProduct.boxes || []).map((b: any, idx: number) => (
+                        <div
+                          key={idx}
+                          onClick={() => setSelectedBox({ price: b.price, name: b.name, img: b.img })}
+                          className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === b.price ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
+                        >
+                          <img src={b.img} className="w-6 h-6 object-cover rounded-full mx-auto mb-1 border border-gray-200" alt="Box" />
+                          <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{b.name}</div>
+                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === b.price ? "text-gold" : "text-gray-400"}`}>+{b.price} DT</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {selectedProduct.colors && selectedProduct.colors.length > 0 && (
                   <div className="mb-4">
                     <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Couleur ({selectedColor?.name || selectedProduct.colors[0].name})</label>
@@ -711,33 +738,6 @@ export default function Home() {
                           </div>
                         );
                       })}
-                    </div>
-                  </div>
-                )}
-
-                {selectedProduct.allowBoxes !== false && (
-                  <div>
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Choix d'emballage</label>
-                    <div className="grid grid-cols-3 gap-2 mb-2">
-                      <div
-                        onClick={() => setSelectedBox({ price: 0, name: "Sans Boîte", img: "original" })}
-                        className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === 0 ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
-                      >
-                        <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.price === 0 ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
-                        <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">Sans Boîte</div>
-                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 DT</div>
-                      </div>
-                      {(selectedProduct.boxes || []).map((b: any, idx: number) => (
-                        <div
-                          key={idx}
-                          onClick={() => setSelectedBox({ price: b.price, name: b.name, img: b.img })}
-                          className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === b.price ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
-                        >
-                          <img src={b.img} className="w-6 h-6 object-cover rounded-full mx-auto mb-1 border border-gray-200" alt="Box" />
-                          <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{b.name}</div>
-                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === b.price ? "text-gold" : "text-gray-400"}`}>+{b.price} DT</div>
-                        </div>
-                      ))}
                     </div>
                   </div>
                 )}
