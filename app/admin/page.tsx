@@ -445,59 +445,6 @@ export default function AdminPage() {
                                 ></textarea>
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Photo du produit</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition cursor-pointer relative overflow-hidden bg-white">
-                                    <input 
-                                        type="file" 
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                                        accept="image/*" 
-                                        onChange={handleProdImageChange}
-                                    />
-                                    {!prodImg ? (
-                                        <>
-                                            <i className="fas fa-cloud-upload-alt text-4xl mb-3 text-yellow-500"></i>
-                                            <span className="text-sm">Cliquez pour sélectionner une image</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="text-sm mb-2">Image modifiée</span>
-                                            <img src={prodImg} className="max-h-40 mt-4 rounded shadow-md object-contain" alt="Preview" />
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">Galerie d'images secondaires (Optionnel, Max 4)</label>
-                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition cursor-pointer relative overflow-hidden bg-white">
-                                    <input 
-                                        type="file" 
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
-                                        accept="image/*"
-                                        multiple
-                                        onChange={handleGalleryImagesChange}
-                                    />
-                                    <i className="fas fa-images text-3xl mb-3 text-yellow-500"></i>
-                                    <span className="text-sm">Cliquez pour ajouter d'autres photos</span>
-                                </div>
-                                {prodGallery.length > 0 && (
-                                    <div className="flex space-x-4 mt-4 overflow-x-auto p-2 bg-gray-50 border rounded-md">
-                                        {prodGallery.map((img, idx) => (
-                                            <div key={idx} className="relative group shrink-0">
-                                                <img src={img} className="h-20 w-20 object-cover rounded shadow-sm border border-gray-200" alt={`Gallery ${idx}`} />
-                                                <button 
-                                                    type="button"
-                                                    onClick={() => setProdGallery(prev => prev.filter((_, i) => i !== idx))}
-                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 opacity-0 group-hover:opacity-100 transition z-10"
-                                                >
-                                                    <i className="fas fa-times"></i>
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
                             {/* COULEURS */}
                             <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
                                 <div className="flex justify-between items-center mb-4">
@@ -557,6 +504,61 @@ export default function AdminPage() {
                                     </div>
                                 )}
                             </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Photo du produit</label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition cursor-pointer relative overflow-hidden bg-white">
+                                    <input 
+                                        type="file" 
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                        accept="image/*" 
+                                        onChange={handleProdImageChange}
+                                    />
+                                    {!prodImg ? (
+                                        <>
+                                            <i className="fas fa-cloud-upload-alt text-4xl mb-3 text-yellow-500"></i>
+                                            <span className="text-sm">Cliquez pour sélectionner une image</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span className="text-sm mb-2">Image modifiée</span>
+                                            <img src={prodImg} className="max-h-40 mt-4 rounded shadow-md object-contain" alt="Preview" />
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">Galerie d'images secondaires (Optionnel, Max 4)</label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-500 hover:bg-gray-50 transition cursor-pointer relative overflow-hidden bg-white">
+                                    <input 
+                                        type="file" 
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleGalleryImagesChange}
+                                    />
+                                    <i className="fas fa-images text-3xl mb-3 text-yellow-500"></i>
+                                    <span className="text-sm">Cliquez pour ajouter d'autres photos</span>
+                                </div>
+                                {prodGallery.length > 0 && (
+                                    <div className="flex space-x-4 mt-4 overflow-x-auto p-2 bg-gray-50 border rounded-md">
+                                        {prodGallery.map((img, idx) => (
+                                            <div key={idx} className="relative group shrink-0">
+                                                <img src={img} className="h-20 w-20 object-cover rounded shadow-sm border border-gray-200" alt={`Gallery ${idx}`} />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setProdGallery(prev => prev.filter((_, i) => i !== idx))}
+                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 opacity-0 group-hover:opacity-100 transition z-10"
+                                                >
+                                                    <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
 
                             <div className="flex flex-col sm:flex-row sm:space-x-8 space-y-4 sm:space-y-0 p-4 bg-gray-50 rounded-md border border-gray-200">
                                 <label className="flex items-center space-x-3 cursor-pointer">
