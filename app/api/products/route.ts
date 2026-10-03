@@ -40,7 +40,7 @@ function saveBase64Image(base64Str: string): string {
     }
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 10;
 
 export async function GET() {
     try {
