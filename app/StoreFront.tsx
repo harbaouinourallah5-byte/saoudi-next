@@ -8,13 +8,13 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [boxes, setBoxes] = useState<any[]>(initialBoxes);
   
   // App state
-  const [loading, setLoading] = useState(false); // NO LOADING needed!
+  // App state
+  const [loading, setLoading] = useState(true); // Restored for aesthetic preloader!
   const [gridLoading, setGridLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCategory, setCurrentCategory] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-
 
   // Product Modal State
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -53,8 +53,12 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   };
 
   useEffect(() => {
-    // Show components instantly
-    document.querySelectorAll('.reveal').forEach((el) => el.classList.add('active'));
+    // Purely aesthetic preloader timeout
+    const forceTimer = setTimeout(() => {
+        setLoading(false);
+        // Force reveal immediately when preloader disappears
+        document.querySelectorAll('.reveal').forEach((el) => el.classList.add('active'));
+    }, 1200); // 1.2 seconds of luxury branding
 
     const initApp = async () => {
       try {
@@ -89,6 +93,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     if (sAddress) setFormAddress(sAddress);
 
     initApp();
+    return () => clearTimeout(forceTimer);
 
     const handleScroll = () => {
       const reveals = document.querySelectorAll(".reveal");
@@ -330,6 +335,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         }
         .animate-slide-in-right { animation: slide-in-right 0.3s ease-out forwards; }
       `}} />
+
+      {/* LUXURY PRELOADER (Restored for aesthetics) */}
+      {loading && (
+        <div className="fixed inset-0 z-[100] bg-gray-900 flex flex-col items-center justify-center transition-opacity duration-1000">
+          <h2 className="text-5xl md:text-7xl brand-font tracking-widest mb-4 brand-glow animate-pulse">SAOUDI</h2>
+          <div className="w-32 md:w-48 h-[1px] bg-gray-700 relative overflow-hidden mb-6">
+            <div className="absolute top-0 left-0 h-full bg-gold w-1/3 animate-loader"></div>
+          </div>
+          <span className="text-gold text-xs md:text-sm uppercase tracking-[0.4em] font-light">- L'élégance qui te complète -</span>
+        </div>
+      )}
 
 
 
