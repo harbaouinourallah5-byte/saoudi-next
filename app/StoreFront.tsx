@@ -58,7 +58,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         setLoading(false);
         // Force reveal immediately when preloader disappears
         document.querySelectorAll('.reveal').forEach((el) => el.classList.add('active'));
-    }, 1200); // 1.2 seconds of luxury branding
+    }, 700); // 0.7 seconds of luxury branding
 
     const initApp = async () => {
       try {
