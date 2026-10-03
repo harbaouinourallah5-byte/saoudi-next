@@ -90,6 +90,16 @@ export async function POST(request: Request) {
                 }
             }
         }
+        
+        if (product.colors && Array.isArray(product.colors)) {
+            for (let c of product.colors) {
+                if (c.image && c.image.startsWith('data:image')) {
+                    c.image = saveBase64Image(c.image);
+                }
+                c.quantity = Number(c.quantity) || 0;
+            }
+        }
+
         await db.collection('products').insertOne(product);
         return NextResponse.json({ success: true });
     } catch (e: any) {

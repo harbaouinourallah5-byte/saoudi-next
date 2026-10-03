@@ -24,6 +24,7 @@ export default function AdminPage() {
     const [allowBoxes, setAllowBoxes] = useState(true);
     const [boxQuantity, setBoxQuantity] = useState(0);
     const [boxes, setBoxes] = useState<{name: string, price: string, img: string}[]>([]);
+    const [prodColors, setProdColors] = useState<{name: string, hex: string, quantity: number, image: string}[]>([]);
     
     // State for editing mode
     const [editingProductTitle, setEditingProductTitle] = useState("");
@@ -135,6 +136,34 @@ export default function AdminPage() {
             reader.readAsDataURL(file);
         }
     };
+    const addColor = () => {
+        setProdColors([...prodColors, { name: "", hex: "#000000", quantity: 0, image: "" }]);
+    };
+
+    const updateColor = (index: number, field: string, value: string | number) => {
+        const newColors = [...prodColors];
+        (newColors[index] as any)[field] = value;
+        setProdColors(newColors);
+    };
+
+    const removeColor = (index: number) => {
+        const newColors = [...prodColors];
+        newColors.splice(index, 1);
+        setProdColors(newColors);
+    };
+
+    const handleColorImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                if (event.target?.result) {
+                    updateColor(index, "image", event.target.result as string);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const saveEverything = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -172,7 +201,8 @@ export default function AdminPage() {
                     allowBoxes,
                     boxes: productBoxes,
                     img: prodImg || 'assets/logo.jpg',
-                    gallery: prodGallery
+                    gallery: prodGallery,
+                    colors: prodColors
                 })
             });
 
@@ -185,6 +215,7 @@ export default function AdminPage() {
                 setProdCategory("Montres");
                 setProdImg("");
                 setProdGallery([]);
+                setProdColors([]);
                 setInStock(true);
                 setFreeShipping(false);
                 setAllowBoxes(true);
@@ -225,6 +256,7 @@ export default function AdminPage() {
         setProdCategory(product.category || "Montres");
         setProdImg(product.img || "");
         setProdGallery(product.gallery || []);
+        setProdColors(product.colors || []);
         setInStock(product.inStock !== false);
         setFreeShipping(product.freeShipping === true);
         
@@ -460,6 +492,65 @@ export default function AdminPage() {
                                                     className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 opacity-0 group-hover:opacity-100 transition z-10"
                                                 >
                                                     <i className="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                            {/* COULEURS */}
+                            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="block text-sm font-bold text-gray-700">Couleurs du Produit</label>
+                                    <button type="button" onClick={addColor} className="bg-blue-600 text-white px-3 py-1 text-xs font-bold rounded shadow hover:bg-blue-700 transition">
+                                        + Ajouter Couleur
+                                    </button>
+                                </div>
+                                {prodColors.length === 0 ? (
+                                    <p className="text-sm text-gray-500 italic text-center py-2">Aucune couleur spécifiée. (Optionnel)</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {prodColors.map((color, index) => (
+                                            <div key={index} className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3 border rounded shadow-sm relative group">
+                                                <input 
+                                                    type="color" 
+                                                    value={color.hex}
+                                                    onChange={e => updateColor(index, "hex", e.target.value)}
+                                                    className="w-10 h-10 cursor-pointer shrink-0"
+                                                    title="Sélectionner la couleur"
+                                                />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Nom (ex: Rouge)" 
+                                                    value={color.name}
+                                                    onChange={e => updateColor(index, "name", e.target.value)}
+                                                    className="flex-grow border p-2 rounded text-sm outline-none focus:border-yellow-500"
+                                                />
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="Qté (Stock)" 
+                                                    value={color.quantity}
+                                                    onChange={e => updateColor(index, "quantity", parseInt(e.target.value) || 0)}
+                                                    className="w-24 border p-2 rounded text-sm outline-none focus:border-yellow-500"
+                                                />
+                                                
+                                                <div className="relative w-12 h-12 border border-gray-300 rounded overflow-hidden flex items-center justify-center shrink-0 hover:bg-gray-100 cursor-pointer">
+                                                    <input 
+                                                        type="file" 
+                                                        accept="image/*" 
+                                                        onChange={(e) => handleColorImageChange(index, e)}
+                                                        className="absolute inset-0 opacity-0 cursor-pointer"
+                                                        title="Image spécifique à la couleur"
+                                                    />
+                                                    {color.image ? (
+                                                        <img src={color.image} className="w-full h-full object-cover" alt="Color" />
+                                                    ) : (
+                                                        <i className="fas fa-image text-gray-400"></i>
+                                                    )}
+                                                </div>
+
+                                                <button type="button" onClick={() => removeColor(index)} className="text-red-500 hover:bg-red-50 p-2 rounded transition ml-2">
+                                                    <i className="fas fa-trash"></i>
                                                 </button>
                                             </div>
                                         ))}

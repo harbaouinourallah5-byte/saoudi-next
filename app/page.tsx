@@ -20,6 +20,7 @@ export default function Home() {
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [selectedBox, setSelectedBox] = useState({ price: 0, name: "Sans Boîte", img: "original" });
+  const [selectedColor, setSelectedColor] = useState<any>(null);
   const [modalMainImg, setModalMainImg] = useState("");
   
   // Auth State
@@ -145,7 +146,13 @@ export default function Home() {
   const openModal = (product: any) => {
     setSelectedProduct(product);
     setSelectedBox({ price: 0, name: "Sans Boîte", img: "original" });
-    setModalMainImg(product.img);
+    if (product.colors && product.colors.length > 0) {
+        setSelectedColor(product.colors[0]);
+        setModalMainImg(product.colors[0].image || product.img);
+    } else {
+        setSelectedColor(null);
+        setModalMainImg(product.img);
+    }
     setIsProductModalOpen(true);
     document.body.style.overflow = "hidden";
   };
@@ -175,6 +182,7 @@ export default function Home() {
       id: Math.random().toString(36).substring(7),
       product: selectedProduct,
       box: selectedBox,
+      color: selectedColor,
       price: selectedProduct.price + selectedBox.price
     };
     const newCart = [...cart, newItem];
@@ -204,7 +212,8 @@ export default function Home() {
     let msg = `*🛍️ NOUVELLE COMMANDE* %0A%0A`;
     cart.forEach((item, index) => {
       let boxLine = item.product.allowBoxes !== false ? ` (Boîte: ${item.box.name})` : "";
-      msg += `*${index + 1}.* ${item.product.title}${boxLine} - ${item.price} DT%0A`;
+      let colorLine = item.color ? ` (Couleur: ${item.color.name})` : "";
+      msg += `*${index + 1}.* ${item.product.title}${colorLine}${boxLine} - ${item.price} DT%0A`;
     });
     
     msg += `%0A*Sous-total:* ${cartSubtotal.toFixed(1)} DT%0A`;
@@ -676,6 +685,36 @@ export default function Home() {
               <hr className="border-gray-100 dark:border-gray-700 mb-4 md:mb-6" />
 
               <form className="space-y-3 md:space-y-4 flex-grow">
+                {selectedProduct.colors && selectedProduct.colors.length > 0 && (
+                  <div className="mb-4">
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Couleur ({selectedColor?.name || selectedProduct.colors[0].name})</label>
+                    <div className="flex flex-wrap gap-3">
+                      {selectedProduct.colors.map((color: any, idx: number) => {
+                        const isSelected = selectedColor?.name === color.name;
+                        return (
+                          <div 
+                            key={idx}
+                            onClick={() => {
+                              setSelectedColor(color);
+                              if (color.image) {
+                                setModalMainImg(color.image);
+                                setSelectedBox({ ...selectedBox, img: "original" });
+                              }
+                            }}
+                            className={`cursor-pointer rounded-full p-1 border-2 transition-all ${isSelected ? 'border-gold scale-110' : 'border-transparent hover:border-gray-300'}`}
+                            title={`${color.name} - ${color.quantity > 0 ? 'En stock' : 'Rupture'}`}
+                          >
+                            <div 
+                              className="w-8 h-8 rounded-full shadow-inner border border-gray-200 dark:border-gray-600"
+                              style={{ backgroundColor: color.hex }}
+                            ></div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {selectedProduct.allowBoxes !== false && (
                   <div>
                     <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Choix d'emballage</label>
@@ -760,9 +799,10 @@ export default function Home() {
               ) : (
                 cart.map(item => (
                   <div key={item.id} className="flex space-x-4 border border-gray-100 dark:border-gray-700 p-2 rounded-md relative group bg-white dark:bg-gray-800 shadow-sm">
-                    <img src={item.product.img} className="w-20 h-20 object-cover rounded-sm border border-gray-200" alt={item.product.title} />
+                    <img src={item.color?.image || item.product.img} className="w-20 h-20 object-cover rounded-sm border border-gray-200" alt={item.product.title} />
                     <div className="flex-grow flex flex-col justify-center">
                       <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{item.product.title}</h4>
+                      {item.color && <span className="text-xs text-gray-500 flex items-center gap-1 mt-1"><div className="w-3 h-3 rounded-full border border-gray-300" style={{backgroundColor: item.color.hex}}></div> {item.color.name}</span>}
                       {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">Boîte: {item.box.name}</span>}
                       <span className="text-gold font-bold mt-1">{item.price.toFixed(1)} DT</span>
                     </div>
