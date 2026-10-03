@@ -62,10 +62,10 @@ export default function Home() {
 
     const initApp = async () => {
       try {
-        const boxRes = await fetch("/api/boxes");
+        const boxRes = await fetch("/api/boxes", { cache: "no-store" });
         if (boxRes.ok) setBoxes(await boxRes.json());
 
-        const prodRes = await fetch("/api/products");
+        const prodRes = await fetch("/api/products", { cache: "no-store" });
         if (prodRes.ok) setProducts(await prodRes.json());
         
         const userRes = await fetch("/api/customer/me");

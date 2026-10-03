@@ -64,7 +64,7 @@ export default function AdminPage() {
 
     const loadAdminProducts = async (token?: string) => {
         try {
-            const response = await fetch('/api/products');
+            const response = await fetch('/api/products', { cache: 'no-store' });
             if (!response.ok) return;
             const data = await response.json();
             setProducts(data);
