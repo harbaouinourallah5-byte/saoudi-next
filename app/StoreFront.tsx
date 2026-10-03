@@ -537,8 +537,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                           <div className="absolute top-3 right-3 z-10 bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm border border-blue-200"><i className="fas fa-truck"></i> Gratuit</div>
                         )}
                         <div
-                          className={`relative h-64 overflow-hidden ${inStock ? 'cursor-pointer' : 'cursor-not-allowed'}`}
-                          onClick={() => inStock && openModal(p)}
+                          className="relative h-64 overflow-hidden cursor-pointer"
+                          onClick={() => openModal(p)}
                         >
                           <img src={p.img} alt={p.title} className={`w-full h-full object-cover transition duration-500 ${inStock ? 'group-hover:scale-105' : 'grayscale opacity-60'}`} />
                           {inStock && (
@@ -557,7 +557,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                           <div className={`font-bold text-xl brand-font mb-4 ${!inStock ? "text-gray-400 line-through" : "text-gold"}`}>{p.price} DT</div>
                           {!inStock && (
                             <div className="w-full bg-gray-400 text-white font-bold py-2 rounded-sm cursor-not-allowed uppercase tracking-wider text-xs">
-                              Out of stock
+                              Rupture de stock
                             </div>
                           )}
                         </div>
@@ -661,7 +661,11 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               <div className="mb-4 md:mb-6">
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-2xl md:text-3xl brand-font font-bold text-gray-900 dark:text-white">{selectedProduct.title}</h2>
-                  <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200">En Stock</span>
+                  {selectedProduct.inStock !== false ? (
+                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200">En Stock</span>
+                  ) : (
+                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-red-200">Rupture de Stock</span>
+                  )}
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-4 font-light leading-relaxed">{selectedProduct.desc}</p>
                 <div className="flex items-center space-x-3">
@@ -677,7 +681,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               <hr className="border-gray-100 dark:border-gray-700 mb-4 md:mb-6" />
 
               <form className="space-y-3 md:space-y-4 flex-grow">
-                {selectedProduct.allowBoxes !== false && (
+                {selectedProduct.inStock !== false && selectedProduct.allowBoxes !== false && (
                   <div>
                     <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Choix d'emballage</label>
                     <div className="grid grid-cols-3 gap-2 mb-2">
@@ -744,9 +748,15 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <span className="text-gold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
                   </div>
                 </div>
-                <button type="button" onClick={addToCart} className="w-full bg-gray-900 dark:bg-gold text-white dark:text-gray-900 font-bold py-3 rounded-sm hover:opacity-90 transition shadow-md flex justify-center items-center space-x-2 mt-4 uppercase tracking-wider text-sm">
-                  <i className="fas fa-shopping-cart text-lg"></i><span>Ajouter au panier</span>
-                </button>
+                {selectedProduct.inStock !== false ? (
+                  <button type="button" onClick={addToCart} className="w-full bg-gray-900 dark:bg-gold text-white dark:text-gray-900 font-bold py-3 rounded-sm hover:opacity-90 transition shadow-md flex justify-center items-center space-x-2 mt-4 uppercase tracking-wider text-sm">
+                    <i className="fas fa-shopping-cart text-lg"></i><span>Ajouter au panier</span>
+                  </button>
+                ) : (
+                  <div className="w-full bg-gray-400 text-white font-bold py-3 rounded-sm text-center uppercase tracking-wider text-sm mt-4 cursor-not-allowed">
+                    Rupture de stock
+                  </div>
+                )}
               </form>
             </div>
           </div>
