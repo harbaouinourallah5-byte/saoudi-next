@@ -784,7 +784,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   </>
                 )}
                 <img
-                  src={selectedBox.img !== "original" ? selectedBox.img : modalMainImg}
+                  src={modalMainImg}
                   className="max-w-full h-auto max-h-[40vh] md:max-h-[60vh] rounded-sm shadow-sm object-contain transition-transform duration-200"
                   style={{
                     transformOrigin: isZooming ? `${mousePos.x}% ${mousePos.y}%` : "center center",
@@ -801,7 +801,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 <div className="flex space-x-2 overflow-x-auto pb-2">
                   <div 
                     onClick={() => { setModalMainImg(selectedProduct.img); setSelectedBox({ ...selectedBox, img: "original" }); }}
-                    className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === selectedProduct.img && selectedBox.img === "original" ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
+                    className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === selectedProduct.img ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
                   >
                     <img src={selectedProduct.img} className="w-16 h-16 object-cover rounded-sm shadow-sm" alt="Thumbnail" />
                   </div>
@@ -809,7 +809,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <div 
                       key={idx}
                       onClick={() => { setModalMainImg(gImg); setSelectedBox({ ...selectedBox, img: "original" }); }}
-                      className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === gImg && selectedBox.img === "original" ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
+                      className={`shrink-0 cursor-pointer border-2 rounded-sm p-1 transition ${modalMainImg === gImg ? 'border-gold' : 'border-transparent hover:border-gray-300'}`}
                     >
                       <img src={gImg} className="w-16 h-16 object-cover rounded-sm shadow-sm" alt={`Thumbnail ${idx}`} />
                     </div>
