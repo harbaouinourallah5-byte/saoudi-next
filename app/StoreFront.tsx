@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { tunisiaData } from "./data/tunisia";
+import { translations, Language } from "./data/translations";
 
 export default function StoreFront({ initialProducts = [], initialBoxes = [] }: { initialProducts?: any[], initialBoxes?: any[] }) {
   // State for products and boxes, initialized with server-rendered data
@@ -9,12 +10,14 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [boxes, setBoxes] = useState<any[]>(initialBoxes);
   
   // App state
-  // App state
   const [loading, setLoading] = useState(true); // Restored for aesthetic preloader!
   const [gridLoading, setGridLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCategory, setCurrentCategory] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [lang, setLang] = useState<Language>('ar');
+
+  const t = translations[lang];
   
 
   // Product Modal State
@@ -368,17 +371,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setIsAuthModalOpen(false);
   };
 
-  const categoryTitles = {
-    all: "Toutes les collections",
-    Montres: "Montres & Duo",
-    Parures: "Parures",
-    Bracelets: "Bracelets",
-    Bagues: "Bagues",
-    Packs: "Packs Cadeaux",
+  const categoryTitles: Record<string, string> = {
+    all: t.cat_all,
+    Montres: t.cat_montres,
+    Couple: t.cat_couple,
+    Bracelets: t.cat_bracelets,
+    Bagues: t.cat_bagues,
+    Packs: t.cat_packs,
   };
 
   return (
-    <div className={`relative scroll-smooth text-gray-900 bg-[#FDFBF7] dark:bg-gray-900 dark:text-gray-100 ${loading ? 'overflow-hidden' : ''}`}>
+    <div className={`relative scroll-smooth text-gray-900 bg-[#FDFBF7] dark:bg-gray-900 dark:text-gray-100 ${loading ? 'overflow-hidden' : ''}`} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       
       {/* CUSTOM TOAST NOTIFICATION */}
       <div 
@@ -389,8 +392,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
-        body { font-family: 'Lato', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
-        h1, h2, h3, .brand-font { font-family: 'Playfair Display', serif; }
+        body { font-family: 'Cairo', sans-serif; transition: background-color 0.3s ease, color 0.3s ease; }
+        h1, h2, h3, .brand-font { font-family: 'Tajawal', sans-serif; }
         .bg-gold { background-color: #D4AF37; }
         .text-gold { color: #D4AF37; }
         .border-gold { border-color: #D4AF37; }
@@ -458,10 +461,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           </button>
         </div>
         <nav className="flex flex-col p-4 space-y-4">
-          <a href="#" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-home w-6 text-gold"></i> Accueil</a>
-          <a href="#boutique" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-gem w-6 text-gold"></i> Boutique</a>
-          <a href="#contact" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-phone w-6 text-gold"></i> Contact</a>
-          <a href="/admin" className="text-yellow-600 hover:text-yellow-700 uppercase tracking-wider text-sm flex items-center font-bold"><i className="fas fa-lock w-6"></i> Admin</a>
+          <a href="#" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-home w-6 text-gold"></i> {t.home}</a>
+          <a href="#boutique" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-gem w-6 text-gold"></i> {t.boutique}</a>
+          <a href="#contact" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-phone w-6 text-gold"></i> {t.contact}</a>
+          <a href="/admin" className="text-yellow-600 hover:text-yellow-700 uppercase tracking-wider text-sm flex items-center font-bold"><i className="fas fa-lock w-6"></i> {t.admin}</a>
         </nav>
         <div className="mt-auto p-4 border-t border-gray-100 dark:border-gray-700">
           <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="w-full bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center justify-center space-x-2">
@@ -472,7 +475,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
       {/* Top Bar */}
       <div className="bg-gray-900 dark:bg-black text-white text-xs py-2 text-center tracking-widest uppercase flex flex-col md:flex-row justify-center items-center md:space-x-6 transition-colors">
-        <span><i className="fas fa-truck mr-2"></i> Livraison sur toute la Tunisie 🇹🇳 (8.5 DT)</span>
+        <span><i className="fas fa-truck mr-2"></i> {t.shipping_banner}</span>
         <span className="hidden md:inline">|</span>
         <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="hover:text-green-400 transition mt-1 md:mt-0">
           <i className="fab fa-whatsapp mr-1 text-green-400"></i> WhatsApp: 55 211 908
@@ -494,13 +497,22 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           </div>
 
           <div className="hidden md:flex space-x-8 items-center">
-            <a href="#" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">Accueil</a>
-            <a href="#boutique" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">Boutique</a>
-            <a href="#contact" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">Contact</a>
-            <a href="/admin" className="text-yellow-600 hover:text-yellow-700 transition uppercase text-sm tracking-wider font-bold"><i className="fas fa-lock"></i> Admin</a>
+            <a href="#" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.home}</a>
+            <a href="#boutique" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.boutique}</a>
+            <a href="#contact" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.contact}</a>
+            <a href="/admin" className="text-yellow-600 hover:text-yellow-700 transition uppercase text-sm tracking-wider font-bold"><i className="fas fa-lock"></i> {t.admin}</a>
           </div>
 
           <div className="flex items-center space-x-4">
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value as Language)} 
+              className="bg-transparent border-none text-gray-800 dark:text-gray-200 text-sm font-bold cursor-pointer outline-none hover:text-gold transition appearance-none"
+            >
+              <option value="ar" className="text-gray-900">🇹🇳 العربية</option>
+              <option value="fr" className="text-gray-900">🇫🇷 Français</option>
+              <option value="en" className="text-gray-900">🇬🇧 English</option>
+            </select>
             <button onClick={toggleTheme} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl" title="Changer le thème">
               <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
             </button>
@@ -509,7 +521,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             </button>
             <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="hidden sm:flex bg-[#25D366] text-white px-5 py-2 uppercase text-sm tracking-widest hover:bg-green-600 transition rounded-full shadow-md items-center space-x-2">
               <i className="fab fa-whatsapp text-lg"></i>
-              <span className="font-bold">Commander</span>
+              <span className="font-bold">{t.order_now}</span>
             </a>
           </div>
         </div>
@@ -564,32 +576,32 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     type="text"
                     value={searchQuery}
                     onChange={handleSearch}
-                    placeholder="Rechercher (Nom, Mot...)"
-                    className="w-full border-b border-gray-300 dark:border-gray-600 focus:border-gold bg-transparent py-2 pl-8 outline-none dark:text-white transition placeholder-gray-400 text-sm"
+                    placeholder={t.search}
+                    className={`w-full border-b border-gray-300 dark:border-gray-600 focus:border-gold bg-transparent py-2 ${lang === 'ar' ? 'pr-8' : 'pl-8'} outline-none dark:text-white transition placeholder-gray-400 text-sm`}
                   />
-                  <i className="fas fa-search absolute left-1 top-3 text-gold"></i>
+                  <i className={`fas fa-search absolute ${lang === 'ar' ? 'right-1' : 'left-1'} top-3 text-gold`}></i>
                 </div>
                 <h3 className="brand-font text-lg md:text-xl mb-4 text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 pb-3 uppercase tracking-wider">
-                  Catégories
+                  {t.categories}
                 </h3>
                 <ul className="space-y-4 font-light text-sm md:text-[13px] tracking-widest uppercase">
                   {[
-                    { id: "all", label: "Toutes les collections" },
-                    { id: "Montres", label: "Montres & Duo" },
-                    { id: "Parures", label: "Parures" },
-                    { id: "Bracelets", label: "Bracelets" },
-                    { id: "Bagues", label: "Bagues" },
-                    { id: "Packs", label: "Packs Cadeaux" },
+                    { id: "all", label: t.cat_all },
+                    { id: "Montres", label: t.cat_montres },
+                    { id: "Bracelets", label: t.cat_bracelets },
+                    { id: "Bagues", label: t.cat_bagues },
+                    { id: "Couple", label: t.cat_couple },
+                    { id: "Packs", label: t.cat_packs },
                   ].map((cat) => (
                     <li key={cat.id}>
                       <button
                         onClick={() => selectCategory(cat.id)}
                         className={`transition w-full text-left flex justify-between items-center group ${
-                          currentCategory === cat.id ? "text-gold font-bold active" : "text-gray-500 dark:text-gray-400 hover:text-gold"
+                          currentCategory === cat.id ? "text-gold font-bold active" : "text-gray-800 dark:text-gray-400 hover:text-gold dark:hover:text-gold font-semibold"
                         }`}
                       >
                         <span>{cat.label}</span>
-                        <i className={`fas fa-chevron-right text-xs transition ${currentCategory === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
+                        <i className={`fas ${lang === 'ar' ? 'fa-chevron-left' : 'fa-chevron-right'} text-xs transition ${currentCategory === cat.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}></i>
                       </button>
                     </li>
                   ))}
@@ -673,7 +685,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             <img src="/assets/logo.jpg" alt="Logo" className="h-16 w-16 object-cover rounded-full mb-4 border-2 border-gold" />
             <h2 className="text-3xl brand-font tracking-wider mb-2 brand-glow">SAOUDI</h2>
             <span className="text-[10px] text-gold tracking-[0.3em] uppercase block mb-4">- Accessoires -</span>
-            <p className="text-gray-400 font-light text-sm italic">"L'élégance qui te complète 🤍"</p>
+            <p className="text-gray-400 font-light text-sm italic">{t.footer_motto}</p>
           </div>
           <div className="flex flex-col items-center md:items-start">
             <h3 className="text-lg brand-font mb-6 text-gold uppercase tracking-wider">Suivez-nous</h3>
@@ -777,9 +789,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 <div className="flex justify-between items-start mb-2">
                   <h2 className="text-2xl md:text-3xl brand-font font-bold text-gray-900 dark:text-white">{selectedProduct.title}</h2>
                   {selectedProduct.inStock !== false ? (
-                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200">En Stock</span>
+                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200">{t.in_stock}</span>
                   ) : (
-                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-red-200">Rupture de Stock</span>
+                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-red-200">{t.out_of_stock}</span>
                   )}
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-4 font-light leading-relaxed">{selectedProduct.desc}</p>
@@ -787,7 +799,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <div className="text-2xl md:text-3xl font-bold text-gold brand-font">{selectedProduct.price.toFixed(1)} DT</div>
                   {selectedProduct.freeShipping && (
                     <div className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">
-                      <i className="fas fa-truck mr-1"></i>Livraison Gratuite
+                      <i className="fas fa-truck mr-1"></i>{t.free_shipping}
                     </div>
                   )}
                 </div>
@@ -798,14 +810,14 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               <form className="space-y-3 md:space-y-4 flex-grow">
                 {selectedProduct.inStock !== false && selectedProduct.allowBoxes !== false && (
                   <div>
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Choix d'emballage</label>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">{t.box_choice}</label>
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <div
-                        onClick={() => setSelectedBox({ price: 0, name: "Sans Boîte", img: "original" })}
+                        onClick={() => setSelectedBox({ price: 0, name: t.no_box, img: "original" })}
                         className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === 0 ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
                       >
                         <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.price === 0 ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
-                        <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">Sans Boîte</div>
+                        <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{t.no_box}</div>
                         <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 DT</div>
                       </div>
                       {(selectedProduct.boxes || []).map((b: any, idx: number) => (
@@ -825,7 +837,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
                 {selectedProduct.colors && selectedProduct.colors.length > 0 && (
                   <div className="mb-4">
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">Couleur ({selectedColor?.name || selectedProduct.colors[0].name})</label>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">{t.color} ({selectedColor?.name || selectedProduct.colors[0].name})</label>
                     <div className="flex flex-wrap gap-3">
                       {selectedProduct.colors.map((color: any, idx: number) => {
                         const isSelected = selectedColor?.name === color.name;
@@ -855,11 +867,11 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
                 <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-sm border border-gray-200 dark:border-gray-600 mt-auto">
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-2">
-                    <span>Prix du Produit <span className="italic text-gray-400">{selectedProduct.allowBoxes !== false ? (selectedBox.price > 0 ? `(+ ${selectedBox.name})` : "(Sans Boîte)") : ""}</span></span>
+                    <span>{t.price} <span className="italic text-gray-400">{selectedProduct.allowBoxes !== false ? (selectedBox.price > 0 ? `(+ ${selectedBox.name})` : `(${t.no_box})`) : ""}</span></span>
                     <span className="font-semibold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
                   </div>
                   <div className="flex justify-between items-center mb-4">
-                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Quantité</label>
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{t.qty}</label>
                     <div className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
                         <button type="button" onClick={() => setSelectedQuantity(Math.max(1, selectedQuantity - 1))} className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gold transition font-bold text-lg">-</button>
                         <span className="font-bold w-6 text-center text-gray-900 dark:text-white">{selectedQuantity}</span>
@@ -867,17 +879,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     </div>
                   </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-3 mt-1">
-                    <span>Total de l'article</span>
+                    <span>{t.item_total}</span>
                     <span className="text-gold">{((selectedProduct.price + selectedBox.price) * selectedQuantity).toFixed(1)} DT</span>
                   </div>
                 </div>
                 {selectedProduct.inStock !== false ? (
                   <button type="button" onClick={addToCart} className="w-full bg-gray-900 dark:bg-gold text-white dark:text-gray-900 font-bold py-3 rounded-sm hover:opacity-90 transition shadow-md flex justify-center items-center space-x-2 mt-4 uppercase tracking-wider text-sm">
-                    <i className="fas fa-shopping-cart text-lg"></i><span>Ajouter au panier</span>
+                    <i className="fas fa-shopping-cart text-lg"></i><span>{t.add_to_cart}</span>
                   </button>
                 ) : (
                   <div className="w-full bg-gray-400 text-white font-bold py-3 rounded-sm text-center uppercase tracking-wider text-sm mt-4 cursor-not-allowed">
-                    Rupture de stock
+                    {t.out_of_stock}
                   </div>
                 )}
               </form>
@@ -907,7 +919,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900">
               <h2 className="text-xl brand-font font-bold flex items-center space-x-2">
                 <i className="fas fa-shopping-cart text-gold"></i>
-                <span>Mon Panier</span>
+                <span>{t.cart}</span>
               </h2>
               <button onClick={() => setIsCartOpen(false)} className="text-gray-500 hover:text-red-500 transition">
                 <i className="fas fa-times text-xl"></i>
@@ -918,8 +930,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500 space-y-4">
                   <i className="fas fa-shopping-basket text-6xl text-gray-300 dark:text-gray-600"></i>
-                  <p>Votre panier est vide.</p>
-                  <button onClick={() => setIsCartOpen(false)} className="px-6 py-2 bg-gold text-gray-900 rounded-full font-bold text-sm uppercase">Continuer mes achats</button>
+                  <p>{t.empty_cart}</p>
+                  <button onClick={() => setIsCartOpen(false)} className="px-6 py-2 bg-gold text-gray-900 rounded-full font-bold text-sm uppercase">{t.continue_shopping}</button>
                 </div>
               ) : (
                 cart.map(item => (
@@ -928,9 +940,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <div className="flex-grow flex flex-col justify-center">
                       <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{item.product.title}</h4>
                       {item.color && <span className="text-xs text-gray-500 flex items-center gap-1 mt-1"><div className="w-3 h-3 rounded-full border border-gray-300" style={{backgroundColor: item.color.hex}}></div> {item.color.name}</span>}
-                      {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">Boîte: {item.box.name}</span>}
+                      {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">{t.box} {item.box.name}</span>}
                       <div className="flex justify-between items-center pr-6 mt-1">
-                          <span className="text-gray-600 dark:text-gray-400 text-xs font-bold">Qté: {item.qty || 1}</span>
+                          <span className="text-gray-600 dark:text-gray-400 text-xs font-bold">{t.qty} {item.qty || 1}</span>
                           <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} DT</span>
                       </div>
                     </div>
@@ -943,19 +955,19 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
               {cart.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm uppercase tracking-wider">Informations de livraison</h3>
+                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm uppercase tracking-wider">{t.shipping_info}</h3>
                   <div className="space-y-3">
-                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                    <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="Téléphone" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder={t.fullname} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                    <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder={t.phone} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                     <select value={formWilaya} onChange={e => { setFormWilaya(e.target.value); setFormDelegation(""); }} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold text-gray-900 dark:text-white">
-                      <option value="">Sélectionner votre Wilaya...</option>
+                      <option value="">{t.wilaya}</option>
                       {Object.keys(tunisiaData).sort().map(w => <option key={w} value={w}>{w}</option>)}
                     </select>
                     <select value={formDelegation} onChange={e => setFormDelegation(e.target.value)} disabled={!formWilaya} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold disabled:opacity-50 text-gray-900 dark:text-white">
-                      <option value="">Sélectionner votre Délégation...</option>
+                      <option value="">{t.delegation}</option>
                       {formWilaya && tunisiaData[formWilaya].sort().map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
-                    <input type="text" value={formRue} onChange={e => setFormRue(e.target.value)} placeholder="Rue / Nahj (Ex: Rue de la liberté)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                    <input type="text" value={formRue} onChange={e => setFormRue(e.target.value)} placeholder={t.rue} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                   </div>
                 </div>
               )}
@@ -964,15 +976,15 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             {cart.length > 0 && (
               <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <span>Sous-total</span>
+                  <span>{t.subtotal}</span>
                   <span>{cartSubtotal.toFixed(1)} DT</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  <span>Frais de livraison</span>
-                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? "GRATUITE" : "8.5 DT"}</span>
+                  <span>{t.shipping_cost}</span>
+                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? t.free : "8.5 DT"}</span>
                 </div>
                 <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-white mb-4 border-t border-gray-200 dark:border-gray-700 pt-2">
-                  <span>Total</span>
+                  <span>{t.total}</span>
                   <span className="text-gold">{cartTotal.toFixed(1)} DT</span>
                 </div>
                 <button 
@@ -985,7 +997,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   ) : (
                     <i className="fas fa-check-circle text-lg"></i>
                   )}
-                  <span>{isSubmittingOrder ? 'Envoi en cours...' : `Confirmer (${cart.length})`}</span>
+                  <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
                 </button>
               </div>
             )}
