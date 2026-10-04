@@ -150,6 +150,39 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     document.body.style.overflow = "hidden";
   };
 
+  const carouselImages = useMemo(() => {
+    if (!selectedProduct) return [];
+    const imgs = [selectedProduct.img];
+    if (selectedProduct.gallery) {
+      imgs.push(...selectedProduct.gallery);
+    }
+    if (selectedProduct.colors) {
+      selectedProduct.colors.forEach((c: any) => {
+        if (c.image && !imgs.includes(c.image)) {
+          imgs.push(c.image);
+        }
+      });
+    }
+    return imgs;
+  }, [selectedProduct]);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentIndex = carouselImages.indexOf(modalMainImg);
+    const nextIndex = (currentIndex + 1) % carouselImages.length;
+    setModalMainImg(carouselImages[nextIndex]);
+    setSelectedBox({ ...selectedBox, img: "original" });
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const currentIndex = carouselImages.indexOf(modalMainImg);
+    let prevIndex = currentIndex - 1;
+    if (prevIndex < 0) prevIndex = carouselImages.length - 1;
+    setModalMainImg(carouselImages[prevIndex]);
+    setSelectedBox({ ...selectedBox, img: "original" });
+  };
+
   const closeModal = () => {
     setIsProductModalOpen(false);
     setSelectedProduct(null);
@@ -650,6 +683,16 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
               >
+                {carouselImages.length > 1 && (
+                  <>
+                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all">
+                      <i className="fas fa-chevron-left"></i>
+                    </button>
+                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all">
+                      <i className="fas fa-chevron-right"></i>
+                    </button>
+                  </>
+                )}
                 <img
                   src={selectedBox.img !== "original" ? selectedBox.img : modalMainImg}
                   className="max-w-full h-auto max-h-[40vh] md:max-h-[60vh] rounded-sm shadow-sm object-contain transition-transform duration-200"
