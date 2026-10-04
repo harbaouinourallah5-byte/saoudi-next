@@ -9,7 +9,13 @@ export async function GET() {
         const pass = process.env.EMAIL_PASS;
         
         if (!user || !pass) {
-            return NextResponse.json({ error: "Variables d'environnement manquantes." });
+            const emailKeys = Object.keys(process.env).filter(k => k.toLowerCase().includes('email') || k.toLowerCase().includes('pass') || k.toLowerCase().includes('user'));
+            return NextResponse.json({ 
+                error: "Variables d'environnement manquantes.",
+                foundKeys: emailKeys,
+                userExists: !!user,
+                passExists: !!pass
+            });
         }
 
         const transporter = nodemailer.createTransport({
