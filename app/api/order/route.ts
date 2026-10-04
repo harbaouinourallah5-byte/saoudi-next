@@ -59,7 +59,9 @@ export async function POST(request: Request) {
                         <h3 style="border-bottom: 2px solid #D4AF37; padding-bottom: 5px; color: #D4AF37;">Informations Client</h3>
                         <p><strong>Nom:</strong> ${customer.name}</p>
                         <p><strong>Téléphone:</strong> <a href="tel:${customer.phone}" style="color: #333; text-decoration: none;">${customer.phone}</a></p>
-                        <p><strong>Adresse:</strong> ${customer.address}</p>
+                        <p><strong>Wilaya:</strong> ${customer.wilaya || 'N/A'}</p>
+                        <p><strong>Délégation:</strong> ${customer.delegation || 'N/A'}</p>
+                        <p><strong>Rue / Détails:</strong> ${customer.rue || customer.address}</p>
 
                         <h3 style="border-bottom: 2px solid #D4AF37; padding-bottom: 5px; color: #D4AF37; margin-top: 30px;">Détails de la Commande</h3>
                         <table style="width: 100%; border-collapse: collapse;">

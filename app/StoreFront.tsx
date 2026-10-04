@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { tunisiaData } from "./data/tunisia";
 
 export default function StoreFront({ initialProducts = [], initialBoxes = [] }: { initialProducts?: any[], initialBoxes?: any[] }) {
   // State for products and boxes, initialized with server-rendered data
@@ -53,7 +54,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   // Form State
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
-  const [formAddress, setFormAddress] = useState("");
+  const [formWilaya, setFormWilaya] = useState("");
+  const [formDelegation, setFormDelegation] = useState("");
+  const [formRue, setFormRue] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
@@ -86,7 +89,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 if (!localStorage.getItem("saoudi_name")) {
                     setFormName(data.user.name || "");
                     setFormPhone(data.user.phone || "");
-                    setFormAddress(data.user.address || "");
+                    setFormRue(data.user.address || "");
                 }
             }
         }
@@ -102,10 +105,14 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     }
     const sName = localStorage.getItem("saoudi_name");
     const sPhone = localStorage.getItem("saoudi_phone");
-    const sAddress = localStorage.getItem("saoudi_address");
+    const sWilaya = localStorage.getItem("saoudi_wilaya");
+    const sDelegation = localStorage.getItem("saoudi_delegation");
+    const sRue = localStorage.getItem("saoudi_rue");
     if (sName) setFormName(sName);
     if (sPhone) setFormPhone(sPhone);
-    if (sAddress) setFormAddress(sAddress);
+    if (sWilaya) setFormWilaya(sWilaya);
+    if (sDelegation) setFormDelegation(sDelegation);
+    if (sRue) setFormRue(sRue);
 
     initApp();
     return () => clearTimeout(forceTimer);
@@ -246,7 +253,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
   const submitCartOrder = async () => {
     if (cart.length === 0) return;
-    if (!formName || !formPhone || !formAddress) {
+    if (!formName || !formPhone || !formWilaya || !formDelegation || !formRue) {
       showToast("S'il vous plaît, remplissez toutes vos informations de livraison.", "error");
       return;
     }
@@ -262,6 +269,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       color: item.color ? item.color.name : null,
     }));
 
+    const combinedAddress = `${formRue}, ${formDelegation}, ${formWilaya}`;
+
     try {
       const res = await fetch('/api/order', {
         method: 'POST',
@@ -269,7 +278,14 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customer: { name: formName, phone: formPhone, address: formAddress },
+          customer: { 
+            name: formName, 
+            phone: formPhone, 
+            address: combinedAddress,
+            wilaya: formWilaya,
+            delegation: formDelegation,
+            rue: formRue
+          },
           cart: cartData,
           total: cartTotal.toFixed(1),
           shipping: cartShipping
@@ -285,7 +301,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         // Save form data so they don't have to type it again next time!
         localStorage.setItem("saoudi_name", formName);
         localStorage.setItem("saoudi_phone", formPhone);
-        localStorage.setItem("saoudi_address", formAddress);
+        localStorage.setItem("saoudi_wilaya", formWilaya);
+        localStorage.setItem("saoudi_delegation", formDelegation);
+        localStorage.setItem("saoudi_rue", formRue);
         
         setIsCartOpen(false);
       } else {
@@ -331,7 +349,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           setUser(data.user);
           if (data.user.name) setFormName(data.user.name);
           if (data.user.phone) setFormPhone(data.user.phone);
-          if (data.user.address) setFormAddress(data.user.address);
+          if (data.user.address) setFormRue(data.user.address);
           setIsAuthModalOpen(false);
           showToast("Connexion réussie !", "success");
         } else {
@@ -929,7 +947,15 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <div className="space-y-3">
                     <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Nom & Prénom" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                     <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="Téléphone" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                    <textarea value={formAddress} onChange={e => setFormAddress(e.target.value)} placeholder="Adresse complète" rows={2} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold"></textarea>
+                    <select value={formWilaya} onChange={e => { setFormWilaya(e.target.value); setFormDelegation(""); }} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold text-gray-900 dark:text-white">
+                      <option value="">Sélectionner votre Wilaya...</option>
+                      {Object.keys(tunisiaData).sort().map(w => <option key={w} value={w}>{w}</option>)}
+                    </select>
+                    <select value={formDelegation} onChange={e => setFormDelegation(e.target.value)} disabled={!formWilaya} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold disabled:opacity-50 text-gray-900 dark:text-white">
+                      <option value="">Sélectionner votre Délégation...</option>
+                      {formWilaya && tunisiaData[formWilaya].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                    <input type="text" value={formRue} onChange={e => setFormRue(e.target.value)} placeholder="Rue / Nahj (Ex: Rue de la liberté)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                   </div>
                 </div>
               )}
