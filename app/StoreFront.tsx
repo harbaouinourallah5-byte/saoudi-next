@@ -897,7 +897,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-sm border border-gray-200 dark:border-gray-600 mt-auto">
                   <div className="flex justify-between text-xs text-gray-600 dark:text-gray-300 mb-2">
                     <span>{t.price} <span className="italic text-gray-400">{selectedProduct.allowBoxes !== false ? (selectedBox.price > 0 ? `(+ ${selectedBox.name})` : `(${t.no_box})`) : ""}</span></span>
-                    <span className="font-semibold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
+                    <span className="font-semibold">{(selectedProduct.price + selectedBox.price).toFixed(1)} {t.currency}</span>
                   </div>
                   <div className="flex justify-between items-center mb-4">
                     <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">{t.qty}</label>
@@ -909,7 +909,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-3 mt-1">
                     <span>{t.item_total}</span>
-                    <span className="text-gold">{((selectedProduct.price + selectedBox.price) * selectedQuantity).toFixed(1)} DT</span>
+                    <span className="text-gold">{((selectedProduct.price + selectedBox.price) * selectedQuantity).toFixed(1)} {t.currency}</span>
                   </div>
                 </div>
                 {selectedProduct.inStock !== false ? (
