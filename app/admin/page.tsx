@@ -347,7 +347,10 @@ export default function AdminPage() {
                 body: JSON.stringify({ status })
             });
             if (res.ok) {
+                // Optimistic UI update
+                setOrders(prev => prev.map(o => o._id === id ? { ...o, status } : o));
                 showToast(`Commande ${status}`, 'success');
+                // Optionnel: loadOrders() en background, pas indispensable vu l'update local
                 loadOrders();
             } else {
                 showToast('Erreur', 'error');
