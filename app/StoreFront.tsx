@@ -239,7 +239,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         setIsCartOpen(false);
       } else {
         const errorData = await res.json();
-        showToast(errorData.error || "Une erreur est survenue lors de la commande.", "error");
+        const errorMsg = errorData.details ? `${errorData.error} (${errorData.details})` : (errorData.error || "Une erreur est survenue lors de la commande.");
+        showToast(errorMsg, "error");
       }
     } catch (e) {
       console.error(e);

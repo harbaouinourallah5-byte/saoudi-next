@@ -83,6 +83,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, message: 'Commande envoyée avec succès' });
     } catch (error: any) {
         console.error("Erreur lors de l'envoi de l'email:", error);
-        return NextResponse.json({ success: false, error: "Impossible d'envoyer l'email." }, { status: 500 });
+        return NextResponse.json({ 
+            success: false, 
+            error: "Impossible d'envoyer l'email.", 
+            details: error.message || error.toString(),
+            hasUser: !!process.env.EMAIL_USER,
+            hasPass: !!process.env.EMAIL_PASS
+        }, { status: 500 });
     }
 }
