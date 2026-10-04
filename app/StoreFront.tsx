@@ -37,6 +37,19 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark');
+    setIsDarkMode(!isDarkMode);
+  };
+
   // Form State
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -470,6 +483,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           </div>
 
           <div className="flex items-center space-x-4">
+            <button onClick={toggleTheme} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl" title="Changer le thème">
+              <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+            </button>
             <button onClick={() => { setAuthMode(user ? "profile" : "login"); setIsAuthModalOpen(true); }} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl">
               <i className="fas fa-user-circle"></i>
             </button>
@@ -685,10 +701,20 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               >
                 {carouselImages.length > 1 && (
                   <>
-                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all">
+                    <button 
+                      onClick={prevImage} 
+                      onMouseMove={(e) => { e.stopPropagation(); setIsZooming(false); }}
+                      onMouseEnter={() => setIsZooming(false)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all"
+                    >
                       <i className="fas fa-chevron-left"></i>
                     </button>
-                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all">
+                    <button 
+                      onClick={nextImage} 
+                      onMouseMove={(e) => { e.stopPropagation(); setIsZooming(false); }}
+                      onMouseEnter={() => setIsZooming(false)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-gray-800 p-2 md:p-3 w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-full shadow-md z-20 transition-all"
+                    >
                       <i className="fas fa-chevron-right"></i>
                     </button>
                   </>
