@@ -956,9 +956,35 @@ export default function AdminPage() {
                                                 <span className="text-lg font-bold text-gray-900">Total: <span className="text-yellow-600">{order.total} DT</span></span>
                                             </div>
                                             <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
-                                                <button onClick={() => updateOrderStatus(order._id, 'confirmée')} className="px-4 py-2 bg-green-500 text-white rounded text-sm font-bold shadow hover:bg-green-600 transition"><i className="fas fa-check mr-2"></i>Confirmer</button>
-                                                <button onClick={() => updateOrderStatus(order._id, 'rejetée')} className="px-4 py-2 bg-red-500 text-white rounded text-sm font-bold shadow hover:bg-red-600 transition"><i className="fas fa-times mr-2"></i>Rejeter</button>
-                                                <button onClick={() => updateOrderStatus(order._id, 'en attente')} className="px-4 py-2 bg-gray-500 text-white rounded text-sm font-bold shadow hover:bg-gray-600 transition"><i className="fas fa-clock mr-2"></i>En attente</button>
+                                                {(!order.status || order.status === 'nouvelle') && (
+                                                    <>
+                                                        <button onClick={() => updateOrderStatus(order._id, 'confirmée')} className="px-4 py-2 bg-green-500 text-white rounded text-sm font-bold shadow hover:bg-green-600 transition"><i className="fas fa-check mr-2"></i>Confirmer</button>
+                                                        <button onClick={() => updateOrderStatus(order._id, 'rejetée')} className="px-4 py-2 bg-red-500 text-white rounded text-sm font-bold shadow hover:bg-red-600 transition"><i className="fas fa-times mr-2"></i>Rejeter</button>
+                                                        <button onClick={() => updateOrderStatus(order._id, 'en attente')} className="px-4 py-2 bg-gray-500 text-white rounded text-sm font-bold shadow hover:bg-gray-600 transition"><i className="fas fa-clock mr-2"></i>En attente</button>
+                                                    </>
+                                                )}
+                                                {order.status === 'en attente' && (
+                                                    <>
+                                                        <button onClick={() => updateOrderStatus(order._id, 'confirmée')} className="px-4 py-2 bg-green-500 text-white rounded text-sm font-bold shadow hover:bg-green-600 transition"><i className="fas fa-check mr-2"></i>Confirmer</button>
+                                                        <button onClick={() => updateOrderStatus(order._id, 'rejetée')} className="px-4 py-2 bg-red-500 text-white rounded text-sm font-bold shadow hover:bg-red-600 transition"><i className="fas fa-times mr-2"></i>Rejeter</button>
+                                                    </>
+                                                )}
+                                                {order.status === 'confirmée' && (
+                                                    <div className="w-full text-center text-green-600 font-bold bg-green-50 py-2 rounded">
+                                                        <i className="fas fa-check-circle mr-2"></i> Commande Confirmée
+                                                    </div>
+                                                )}
+                                                {order.status === 'rejetée' && (
+                                                    <div className="w-full text-center text-red-600 font-bold bg-red-50 py-2 rounded flex justify-between items-center px-4">
+                                                        <span><i className="fas fa-times-circle mr-2"></i> Commande Rejetée</span>
+                                                        <button onClick={async () => {
+                                                            if (confirm('Supprimer définitivement cette commande ?')) {
+                                                                const res = await fetch(`/api/orders/${order._id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } });
+                                                                if (res.ok) loadOrders();
+                                                            }
+                                                        }} className="text-red-500 hover:text-red-700 ml-4"><i className="fas fa-trash"></i></button>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
