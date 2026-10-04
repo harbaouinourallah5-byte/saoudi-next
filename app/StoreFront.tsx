@@ -665,12 +665,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     return (
                       <div key={idx} className="group bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-sm overflow-hidden shadow-sm hover:shadow-xl transition duration-300 flex flex-col relative reveal active">
                         {inStock ? (
-                          <div className="absolute top-3 left-3 z-10 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm">En Stock</div>
+                          <div className="absolute top-3 left-3 z-10 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm border border-green-200">{t.in_stock}</div>
                         ) : (
-                          <div className="absolute top-3 left-3 z-10 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm">Épuisé</div>
+                          <div className="absolute top-3 left-3 z-10 bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm border border-red-200">{t.out_of_stock}</div>
+                        )}
+                        {p.gender && (
+                          <div className="absolute top-10 left-3 z-10 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-800 dark:text-gray-200 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest shadow-sm border border-gray-200 dark:border-gray-600">
+                            {p.gender === 'femme' ? t.gender_women : p.gender === 'homme' ? t.gender_men : t.gender_unisex}
+                          </div>
                         )}
                         {freeShipping && (
-                          <div className="absolute top-3 right-3 z-10 bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm border border-blue-200"><i className="fas fa-truck"></i> Gratuit</div>
+                          <div className="absolute top-3 right-3 z-10 bg-blue-100 text-blue-700 text-[9px] font-bold px-2 py-1 rounded-full uppercase tracking-widest shadow-sm border border-blue-200"><i className="fas fa-truck"></i> {t.free}</div>
                         )}
                         <div
                           className="relative h-64 overflow-hidden cursor-pointer"
@@ -815,13 +820,20 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
             <div className="md:w-1/2 p-4 md:p-8 flex flex-col">
               <div className="mb-4 md:mb-6">
-                <div className="flex justify-between items-start mb-2">
-                  <h2 className="text-2xl md:text-3xl brand-font font-bold text-gray-900 dark:text-white">{selectedProduct.title}</h2>
-                  {selectedProduct.inStock !== false ? (
-                    <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200">{t.in_stock}</span>
-                  ) : (
-                    <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-red-200">{t.out_of_stock}</span>
-                  )}
+                <div className="flex justify-between items-start mb-2 gap-2">
+                  <h2 className="text-2xl md:text-3xl brand-font font-bold text-gray-900 dark:text-white leading-tight">{selectedProduct.title}</h2>
+                  <div className="flex flex-col items-end gap-1">
+                    {selectedProduct.inStock !== false ? (
+                      <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-green-200 whitespace-nowrap">{t.in_stock}</span>
+                    ) : (
+                      <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-red-200 whitespace-nowrap">{t.out_of_stock}</span>
+                    )}
+                    {selectedProduct.gender && (
+                      <span className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-[10px] font-bold px-2 py-1 rounded-sm uppercase tracking-widest border border-gray-200 dark:border-gray-700 whitespace-nowrap">
+                         {selectedProduct.gender === 'femme' ? t.gender_women : selectedProduct.gender === 'homme' ? t.gender_men : t.gender_unisex}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-4 font-light leading-relaxed">{selectedProduct.desc}</p>
                 <div className="flex items-center space-x-3">
