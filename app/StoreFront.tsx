@@ -496,30 +496,32 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             </div>
           </div>
 
-          <div className="hidden md:flex space-x-8 items-center">
+          <div className="hidden md:flex gap-8 items-center">
             <a href="#" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.home}</a>
             <a href="#boutique" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.boutique}</a>
             <a href="#contact" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.contact}</a>
             <a href="/admin" className="text-yellow-600 hover:text-yellow-700 transition uppercase text-sm tracking-wider font-bold"><i className="fas fa-lock"></i> {t.admin}</a>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <select 
-              value={lang} 
-              onChange={(e) => setLang(e.target.value as Language)} 
-              className="bg-transparent border-none text-gray-800 dark:text-gray-200 text-sm font-bold cursor-pointer outline-none hover:text-gold transition appearance-none"
-            >
-              <option value="ar" className="text-gray-900">🇹🇳 العربية</option>
-              <option value="fr" className="text-gray-900">🇫🇷 Français</option>
-              <option value="en" className="text-gray-900">🇬🇧 English</option>
-            </select>
+          <div className="flex items-center gap-4">
+            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-md p-1 shadow-inner">
+              {(['ar', 'fr', 'en'] as Language[]).map(l => (
+                <button 
+                  key={l}
+                  onClick={() => setLang(l)}
+                  className={`text-xs font-bold px-2 py-1 rounded transition ${lang === l ? 'bg-white dark:bg-gray-600 text-gold shadow-sm' : 'text-gray-500 hover:text-gray-900 dark:hover:text-gray-300'}`}
+                >
+                  {l.toUpperCase()}
+                </button>
+              ))}
+            </div>
             <button onClick={toggleTheme} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl" title="Changer le thème">
               <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
             </button>
             <button onClick={() => { setAuthMode(user ? "profile" : "login"); setIsAuthModalOpen(true); }} className="text-gray-800 dark:text-gray-200 hover:text-gold transition text-xl">
               <i className="fas fa-user-circle"></i>
             </button>
-            <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="hidden sm:flex bg-[#25D366] text-white px-5 py-2 uppercase text-sm tracking-widest hover:bg-green-600 transition rounded-full shadow-md items-center space-x-2">
+            <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="hidden sm:flex bg-[#25D366] text-white px-5 py-2 uppercase text-sm tracking-widest hover:bg-green-600 transition rounded-full shadow-md items-center gap-2">
               <i className="fab fa-whatsapp text-lg"></i>
               <span className="font-bold">{t.order_now}</span>
             </a>
@@ -661,10 +663,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                           <span className="text-[9px] text-gray-400 tracking-widest uppercase mb-1">{p.category || "Collection"}</span>
                           <h3 className={`text-lg md:text-xl brand-font mb-2 text-gray-900 dark:text-white ${!inStock ? "text-gray-400" : ""}`}>{p.title}</h3>
                           <p className="text-gray-500 dark:text-gray-400 text-sm font-light mb-4 flex-grow line-clamp-2">{p.desc}</p>
-                          <div className={`font-bold text-xl brand-font mb-4 ${!inStock ? "text-gray-400 line-through" : "text-gold"}`}>{p.price} DT</div>
+                          <div className={`font-bold text-xl brand-font mb-4 ${!inStock ? "text-gray-400 line-through" : "text-gold"}`}>{p.price} {t.currency}</div>
                           {!inStock && (
                             <div className="w-full bg-gray-400 text-white font-bold py-2 rounded-sm cursor-not-allowed uppercase tracking-wider text-xs">
-                              Rupture de stock
+                              {t.out_of_stock}
                             </div>
                           )}
                         </div>
@@ -796,7 +798,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                 </div>
                 <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mb-4 font-light leading-relaxed">{selectedProduct.desc}</p>
                 <div className="flex items-center space-x-3">
-                  <div className="text-2xl md:text-3xl font-bold text-gold brand-font">{selectedProduct.price.toFixed(1)} DT</div>
+                  <div className="text-2xl md:text-3xl font-bold text-gold brand-font">{selectedProduct.price.toFixed(1)} {t.currency}</div>
                   {selectedProduct.freeShipping && (
                     <div className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest">
                       <i className="fas fa-truck mr-1"></i>{t.free_shipping}
@@ -818,7 +820,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       >
                         <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.price === 0 ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
                         <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{t.no_box}</div>
-                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 DT</div>
+                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 {t.currency}</div>
                       </div>
                       {(selectedProduct.boxes || []).map((b: any, idx: number) => (
                         <div
@@ -828,7 +830,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                         >
                           <img src={b.img} className="w-6 h-6 object-cover rounded-full mx-auto mb-1 border border-gray-200" alt="Box" />
                           <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{b.name}</div>
-                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === b.price ? "text-gold" : "text-gray-400"}`}>+{b.price} DT</div>
+                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === b.price ? "text-gold" : "text-gray-400"}`}>+{b.price} {t.currency}</div>
                         </div>
                       ))}
                     </div>
@@ -943,7 +945,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">{t.box} {item.box.name}</span>}
                       <div className="flex justify-between items-center pr-6 mt-1">
                           <span className="text-gray-600 dark:text-gray-400 text-xs font-bold">{t.qty} {item.qty || 1}</span>
-                          <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} DT</span>
+                          <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} {t.currency}</span>
                       </div>
                     </div>
                     <button onClick={() => removeFromCart(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition">
@@ -977,15 +979,15 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
                   <span>{t.subtotal}</span>
-                  <span>{cartSubtotal.toFixed(1)} DT</span>
+                  <span>{cartSubtotal.toFixed(1)} {t.currency}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
                   <span>{t.shipping_cost}</span>
-                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? t.free : "8.5 DT"}</span>
+                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? t.free : `8.5 ${t.currency}`}</span>
                 </div>
                 <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-white mb-4 border-t border-gray-200 dark:border-gray-700 pt-2">
                   <span>{t.total}</span>
-                  <span className="text-gold">{cartTotal.toFixed(1)} DT</span>
+                  <span className="text-gold">{cartTotal.toFixed(1)} {t.currency}</span>
                 </div>
                 <button 
                   onClick={submitCartOrder} 

@@ -5,7 +5,7 @@ export const translations = {
     contact: "اتصل بنا",
     admin: "لوحة القيادة",
     order_now: "أطلب الان",
-    shipping_banner: "🚚 التوصيل لكامل تراب الجمهورية 🇹🇳 (8.5 د.ت)",
+    shipping_banner: "🚚 التوصيل لكامل تراب الجمهورية 🇹🇳 (8.5 دينار)",
     search: "بحث (اسم، نوع...)",
     categories: "الأصناف",
     cat_all: "جميع التشكيلات",
@@ -44,7 +44,8 @@ export const translations = {
     fill_all: "الرجاء تعمير جميع معلومات التوصيل.",
     success_order: "تم تأكيد طلبك بنجاح!",
     error: "خطأ",
-    footer_motto: '"الأناقة التي تكتمل بك 🤍"'
+    footer_motto: '"الأناقة التي تكتمل بك 🤍"',
+    currency: "دينار"
   },
   fr: {
     home: "Accueil",
@@ -91,7 +92,8 @@ export const translations = {
     fill_all: "S'il vous plaît, remplissez toutes vos informations de livraison.",
     success_order: "Votre commande a été confirmée avec succès !",
     error: "Erreur",
-    footer_motto: '"L\'élégance qui te complète 🤍"'
+    footer_motto: '"L\'élégance qui te complète 🤍"',
+    currency: "DT"
   },
   en: {
     home: "Home",
@@ -138,7 +140,8 @@ export const translations = {
     fill_all: "Please fill in all your shipping information.",
     success_order: "Your order has been confirmed successfully!",
     error: "Error",
-    footer_motto: '"The elegance that completes you 🤍"'
+    footer_motto: '"The elegance that completes you 🤍"',
+    currency: "DT"
   }
 };
 export type Language = 'ar' | 'fr' | 'en';
