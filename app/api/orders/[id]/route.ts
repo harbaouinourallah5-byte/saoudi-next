@@ -22,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         
         await db.collection('orders').updateOne(
             { _id: new ObjectId(params.id) },
-            { $set: { status: status } }
+            { $set: { status: status, statusUpdatedAt: new Date() } }
         );
 
         return NextResponse.json({ success: true });
