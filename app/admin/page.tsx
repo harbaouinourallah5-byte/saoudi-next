@@ -91,33 +91,69 @@ export default function AdminPage() {
         }
     };
 
-    const handleProdImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const compressImage = (file: File): Promise<string> => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    const MAX_SIZE = 800; // Auto-resize if bigger than 800px
+
+                    if (width > height) {
+                        if (width > MAX_SIZE) {
+                            height *= MAX_SIZE / width;
+                            width = MAX_SIZE;
+                        }
+                    } else {
+                        if (height > MAX_SIZE) {
+                            width *= MAX_SIZE / height;
+                            height = MAX_SIZE;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.fillStyle = '#ffffff'; // White background for transparency
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.65)); // 65% quality JPEG
+                    } else {
+                        resolve(event.target?.result as string);
+                    }
+                };
+            };
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    const handleProdImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                if (event.target?.result) {
-                    setProdImg(event.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
+            try {
+                const compressedBase64 = await compressImage(file);
+                setProdImg(compressedBase64);
+            } catch (e) {
+                console.error("Compression error:", e);
+            }
         }
     };
 
-    const handleGalleryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleGalleryImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
-            Promise.all(files.map(file => {
-                return new Promise<string>((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        resolve(event.target?.result as string);
-                    };
-                    reader.readAsDataURL(file);
-                });
-            })).then(base64Images => {
+            try {
+                const base64Images = await Promise.all(files.map(file => compressImage(file)));
                 setProdGallery(prev => [...prev, ...base64Images].slice(0, 4)); // max 4 photos for gallery
-            });
+            } catch (e) {
+                console.error("Gallery compression error:", e);
+            }
         }
     };
 
@@ -144,16 +180,15 @@ export default function AdminPage() {
         setBoxes(newBoxes);
     };
 
-    const handleBoxImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBoxImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                if (event.target?.result) {
-                    updateBox(index, "img", event.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
+            try {
+                const compressedBase64 = await compressImage(file);
+                updateBox(index, "img", compressedBase64);
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
     const addColor = () => {
@@ -172,16 +207,15 @@ export default function AdminPage() {
         setProdColors(newColors);
     };
 
-    const handleColorImageChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleColorImageChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                if (event.target?.result) {
-                    updateColor(index, "image", event.target.result as string);
-                }
-            };
-            reader.readAsDataURL(file);
+            try {
+                const compressedBase64 = await compressImage(file);
+                updateColor(index, "image", compressedBase64);
+            } catch (err) {
+                console.error(err);
+            }
         }
     };
 
