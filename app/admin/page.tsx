@@ -511,6 +511,7 @@ export default function AdminPage() {
                                         className="w-full border border-gray-300 p-3 rounded-md focus:border-yellow-500 outline-none bg-white"
                                     >
                                         <option value="Montres">Montres & Duo</option>
+                                        <option value="Colliers">Colliers</option>
                                         <option value="Couple">Couple</option>
                                         <option value="Bracelets">Bracelets</option>
                                         <option value="Bagues">Bagues</option>

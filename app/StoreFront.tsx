@@ -595,6 +595,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   {[
                     { id: "all", label: t.cat_all },
                     { id: "Montres", label: t.cat_montres },
+                    { id: "Colliers", label: t.cat_colliers },
                     { id: "Bracelets", label: t.cat_bracelets },
                     { id: "Bagues", label: t.cat_bagues },
                     { id: "Couple", label: t.cat_couple },
