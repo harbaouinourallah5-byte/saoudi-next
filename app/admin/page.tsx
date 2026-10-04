@@ -335,6 +335,27 @@ export default function AdminPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    const updateOrderStatus = async (id: string, status: string) => {
+        try {
+            const res = await fetch(`/api/orders/${id}`, {
+                method: 'PATCH',
+                headers: { 
+                    'Authorization': 'Bearer ' + authToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+            if (res.ok) {
+                showToast(`Commande ${status}`, 'success');
+                loadOrders();
+            } else {
+                showToast('Erreur', 'error');
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
     const deleteProduct = async (title: string) => {
         if (window.confirm("Voulez-vous vraiment supprimer ce produit ?")) {
             try {
@@ -825,7 +846,12 @@ export default function AdminPage() {
                                                     <p className="text-sm text-gray-600"><i className="fas fa-map-marker-alt mr-1"></i>{order.customer.address}</p>
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="bg-yellow-100 text-yellow-800 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">{order.status || 'NOUVELLE'}</span>
+                                                    <span className={`font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider ${
+                                                        order.status === 'confirmée' ? 'bg-green-100 text-green-800' :
+                                                        order.status === 'rejetée' ? 'bg-red-100 text-red-800' :
+                                                        order.status === 'en attente' ? 'bg-gray-100 text-gray-800' :
+                                                        'bg-yellow-100 text-yellow-800'
+                                                    }`}>{order.status || 'NOUVELLE'}</span>
                                                     <p className="text-xs text-gray-400 mt-2">{new Date(order.date).toLocaleString('fr-FR')}</p>
                                                 </div>
                                             </div>
@@ -850,6 +876,11 @@ export default function AdminPage() {
                                             <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3">
                                                 <span className="text-gray-600 text-sm">Frais de livraison: {order.shipping} DT</span>
                                                 <span className="text-lg font-bold text-gray-900">Total: <span className="text-yellow-600">{order.total} DT</span></span>
+                                            </div>
+                                            <div className="flex justify-end gap-3 pt-4 mt-2 border-t border-gray-100">
+                                                <button onClick={() => updateOrderStatus(order._id, 'confirmée')} className="px-4 py-2 bg-green-500 text-white rounded text-sm font-bold shadow hover:bg-green-600 transition"><i className="fas fa-check mr-2"></i>Confirmer</button>
+                                                <button onClick={() => updateOrderStatus(order._id, 'rejetée')} className="px-4 py-2 bg-red-500 text-white rounded text-sm font-bold shadow hover:bg-red-600 transition"><i className="fas fa-times mr-2"></i>Rejeter</button>
+                                                <button onClick={() => updateOrderStatus(order._id, 'en attente')} className="px-4 py-2 bg-gray-500 text-white rounded text-sm font-bold shadow hover:bg-gray-600 transition"><i className="fas fa-clock mr-2"></i>En attente</button>
                                             </div>
                                         </div>
                                     ))}
