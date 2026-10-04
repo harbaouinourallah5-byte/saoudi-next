@@ -451,7 +451,7 @@ export default function AdminPage() {
                         <h3 className="text-gray-400 uppercase tracking-widest text-xs font-bold mb-4">Menu</h3>
                         <ul className="space-y-2">
                             <li><button onClick={() => setActiveTab('products')} className={`block w-full text-left p-3 rounded-md transition ${activeTab === 'products' ? 'bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}><i className="fas fa-box w-6"></i> Produits</button></li>
-                            <li><button onClick={() => setActiveTab('orders')} className={`block w-full text-left p-3 rounded-md transition ${activeTab === 'orders' ? 'bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}><i className="fas fa-shopping-cart w-6"></i> Commandes {orders.length > 0 && <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">{orders.length}</span>}</button></li>
+                            <li><button onClick={() => setActiveTab('orders')} className={`block w-full text-left p-3 rounded-md transition ${activeTab === 'orders' ? 'bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}><i className="fas fa-shopping-cart w-6"></i> Commandes {orders.filter(o => !o.status || o.status === 'nouvelle' || o.status === 'en attente').length > 0 && <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">{orders.filter(o => !o.status || o.status === 'nouvelle' || o.status === 'en attente').length}</span>}</button></li>
                         </ul>
                     </div>
                 </div>
