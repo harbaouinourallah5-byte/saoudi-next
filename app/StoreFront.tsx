@@ -40,6 +40,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formAddress, setFormAddress] = useState("");
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const [isZooming, setIsZooming] = useState(false);
@@ -192,38 +193,60 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const cartShipping = cart.length > 0 ? (cart.some(item => item.product.freeShipping) ? 0 : 8.5) : 0;
   const cartTotal = cartSubtotal + cartShipping;
 
-  const submitCartOrder = () => {
+  const submitCartOrder = async () => {
     if (cart.length === 0) return;
     if (!formName || !formPhone || !formAddress) {
       showToast("S'il vous plaît, remplissez toutes vos informations de livraison.", "error");
       return;
     }
 
-    let msg = `*🛍️ NOUVELLE COMMANDE* %0A%0A`;
-    cart.forEach((item, index) => {
-      let boxLine = item.product.allowBoxes !== false ? ` (Boîte: ${item.box.name})` : "";
-      let colorLine = item.color ? ` (Couleur: ${item.color.name})` : "";
-      msg += `*${index + 1}.* ${item.product.title}${colorLine}${boxLine} - ${item.price} DT%0A`;
-    });
+    setIsSubmittingOrder(true);
     
-    msg += `%0A*Sous-total:* ${cartSubtotal.toFixed(1)} DT%0A`;
-    msg += `*Livraison:* ${cartShipping === 0 ? "GRATUITE" : "8.5 DT"}%0A`;
-    msg += `*TOTAL À PAYER:* ${cartTotal.toFixed(1)} DT%0A%0A`;
-    
-    msg += `*📦 Informations Client:*%0A*Nom:* ${formName}%0A*Téléphone:* ${formPhone}%0A*Adresse:* ${formAddress}`;
+    // Format cart data for the API
+    const cartData = cart.map((item) => ({
+      title: item.product.title,
+      price: item.price,
+      qty: 1, // Quantity is 1 per cart item entry
+      box: item.product.allowBoxes !== false ? item.box.name : "Sans Boîte",
+      color: item.color ? item.color.name : null,
+    }));
 
-    window.open(`https://wa.me/21655211908?text=${msg}`, "_blank");
-    
-    // Clear cart after sending
-    setCart([]);
-    localStorage.removeItem("saoudi_cart");
-    
-    // Save form data so they don't have to type it again next time!
-    localStorage.setItem("saoudi_name", formName);
-    localStorage.setItem("saoudi_phone", formPhone);
-    localStorage.setItem("saoudi_address", formAddress);
-    
-    setIsCartOpen(false);
+    try {
+      const res = await fetch('/api/order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          customer: { name: formName, phone: formPhone, address: formAddress },
+          cart: cartData,
+          total: cartTotal.toFixed(1),
+          shipping: cartShipping
+        }),
+      });
+
+      if (res.ok) {
+        showToast("Votre commande a été confirmée avec succès !", "success");
+        // Clear cart after sending
+        setCart([]);
+        localStorage.removeItem("saoudi_cart");
+        
+        // Save form data so they don't have to type it again next time!
+        localStorage.setItem("saoudi_name", formName);
+        localStorage.setItem("saoudi_phone", formPhone);
+        localStorage.setItem("saoudi_address", formAddress);
+        
+        setIsCartOpen(false);
+      } else {
+        const errorData = await res.json();
+        showToast(errorData.error || "Une erreur est survenue lors de la commande.", "error");
+      }
+    } catch (e) {
+      console.error(e);
+      showToast("Erreur de connexion au serveur.", "error");
+    } finally {
+      setIsSubmittingOrder(false);
+    }
   };
 
   // Auth Handlers
@@ -841,8 +864,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <span>Total</span>
                   <span className="text-gold">{cartTotal.toFixed(1)} DT</span>
                 </div>
-                <button onClick={submitCartOrder} className="w-full bg-[#25D366] text-white font-bold py-3 rounded-md hover:bg-green-600 transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm">
-                  <i className="fab fa-whatsapp text-lg"></i><span>Commander ({cart.length})</span>
+                <button 
+                  onClick={submitCartOrder} 
+                  disabled={isSubmittingOrder}
+                  className="w-full bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingOrder ? (
+                    <i className="fas fa-spinner fa-spin text-lg"></i>
+                  ) : (
+                    <i className="fas fa-check-circle text-lg"></i>
+                  )}
+                  <span>{isSubmittingOrder ? 'Envoi en cours...' : `Confirmer (${cart.length})`}</span>
                 </button>
               </div>
             )}
