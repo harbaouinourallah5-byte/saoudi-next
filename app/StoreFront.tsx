@@ -14,6 +14,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [gridLoading, setGridLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentCategory, setCurrentCategory] = useState("all");
+  const [genderFilter, setGenderFilter] = useState("all");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [lang, setLang] = useState<Language>('ar');
 
@@ -147,13 +148,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setTimeout(() => setGridLoading(false), 800);
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p: any) => {
+  const [filteredProducts, setFilteredProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    const newFiltered = products.filter((p: any) => {
       const matchCat = currentCategory === "all" || p.category === currentCategory;
+      const matchGender = genderFilter === "all" || p.gender === genderFilter || !p.gender;
       const matchSearch = p.title.toLowerCase().includes(searchQuery);
-      return matchCat && matchSearch;
+      return matchCat && matchSearch && matchGender;
     });
-  }, [products, currentCategory, searchQuery]);
+    setFilteredProducts(newFiltered);
+  }, [products, currentCategory, searchQuery, genderFilter]);
 
 
 
@@ -616,6 +621,28 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               <div className="mb-8 flex justify-between items-end border-b border-gray-200 dark:border-gray-700 pb-3">
                 <h2 className="text-2xl md:text-3xl brand-font text-gray-900 dark:text-white">{categoryTitles[currentCategory as keyof typeof categoryTitles]}</h2>
                 <span className="text-gray-500 text-xs tracking-widest uppercase">{filteredProducts.length} Produit{filteredProducts.length !== 1 ? "s" : ""}</span>
+              </div>
+
+              {/* GENDER FILTER */}
+              <div className="flex flex-wrap justify-center gap-3 mb-8">
+                {[
+                  { id: "all", label: t.gender_all },
+                  { id: "femme", label: t.gender_women },
+                  { id: "homme", label: t.gender_men },
+                  { id: "mixte", label: t.gender_unisex }
+                ].map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => setGenderFilter(g.id)}
+                    className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition border ${
+                      genderFilter === g.id 
+                        ? 'bg-gray-900 dark:bg-gold text-white dark:text-gray-900 border-gray-900 dark:border-gold' 
+                        : 'bg-transparent text-gray-600 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:border-gold dark:hover:border-gold'
+                    }`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 relative min-h-[400px]">

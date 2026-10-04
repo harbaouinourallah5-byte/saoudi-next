@@ -20,6 +20,7 @@ export default function AdminPage() {
     const [prodName, setProdName] = useState("");
     const [prodPrice, setProdPrice] = useState("");
     const [prodCategory, setProdCategory] = useState("Montres");
+    const [prodGender, setProdGender] = useState("");
     const [prodDesc, setProdDesc] = useState("");
     const [prodImg, setProdImg] = useState("");
     const [prodGallery, setProdGallery] = useState<string[]>([]);
@@ -250,6 +251,7 @@ export default function AdminPage() {
                     price: priceNum,
                     desc: prodDesc,
                     category: prodCategory,
+                    gender: prodGender,
                     inStock,
                     freeShipping,
                     allowBoxes,
@@ -267,6 +269,7 @@ export default function AdminPage() {
                 setProdPrice("");
                 setProdDesc("");
                 setProdCategory("Montres");
+                setProdGender("");
                 setProdImg("");
                 setProdGallery([]);
                 setProdColors([]);
@@ -308,6 +311,7 @@ export default function AdminPage() {
         setProdPrice(product.price.toString());
         setProdDesc(product.desc);
         setProdCategory(product.category || "Montres");
+        setProdGender(product.gender || "");
         setProdImg(product.img || "");
         setProdGallery(product.gallery || []);
         setProdColors(product.colors || []);
@@ -482,10 +486,23 @@ export default function AdminPage() {
                                         className="w-full border border-gray-300 p-3 rounded-md focus:border-yellow-500 outline-none bg-white"
                                     >
                                         <option value="Montres">Montres & Duo</option>
-                                        <option value="Parures">Parures</option>
+                                        <option value="Couple">Couple</option>
                                         <option value="Bracelets">Bracelets</option>
                                         <option value="Bagues">Bagues</option>
                                         <option value="Packs">Packs Cadeaux</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">Genre (Cible)</label>
+                                    <select 
+                                        value={prodGender}
+                                        onChange={(e) => setProdGender(e.target.value)}
+                                        className="w-full border border-gray-300 p-3 rounded-md focus:border-yellow-500 outline-none bg-white"
+                                    >
+                                        <option value="">Non spécifié</option>
+                                        <option value="femme">Femme</option>
+                                        <option value="homme">Homme</option>
+                                        <option value="mixte">Mixte</option>
                                     </select>
                                 </div>
                             </div>

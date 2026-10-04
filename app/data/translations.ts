@@ -45,7 +45,11 @@ export const translations = {
     success_order: "تم تأكيد طلبك بنجاح!",
     error: "خطأ",
     footer_motto: '"الأناقة التي تكتمل بك 🤍"',
-    currency: "دينار"
+    currency: "دينار",
+    gender_all: "الكل",
+    gender_women: "نسائي 👩",
+    gender_men: "رجالي 👨",
+    gender_unisex: "للجنسين 👫"
   },
   fr: {
     home: "Accueil",
@@ -93,7 +97,11 @@ export const translations = {
     success_order: "Votre commande a été confirmée avec succès !",
     error: "Erreur",
     footer_motto: '"L\'élégance qui te complète 🤍"',
-    currency: "DT"
+    currency: "DT",
+    gender_all: "Tous",
+    gender_women: "Femme 👩",
+    gender_men: "Homme 👨",
+    gender_unisex: "Mixte 👫"
   },
   en: {
     home: "Home",
@@ -141,7 +149,11 @@ export const translations = {
     success_order: "Your order has been confirmed successfully!",
     error: "Error",
     footer_motto: '"The elegance that completes you 🤍"',
-    currency: "DT"
+    currency: "DT",
+    gender_all: "All",
+    gender_women: "Women 👩",
+    gender_men: "Men 👨",
+    gender_unisex: "Unisex 👫"
   }
 };
 export type Language = 'ar' | 'fr' | 'en';
