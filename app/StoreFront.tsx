@@ -181,6 +181,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
     
     showToast("Produit ajouté au panier avec succès !", "success");
+    closeModal();
+    setIsCartOpen(true);
   };
 
   const removeFromCart = (id: string) => {
