@@ -179,8 +179,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const newCart = [...cart, newItem];
     setCart(newCart);
     localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
-    closeModal();
-    setIsCartOpen(true);
+    
+    showToast("Produit ajouté au panier avec succès !", "success");
   };
 
   const removeFromCart = (id: string) => {
@@ -239,8 +239,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         setIsCartOpen(false);
       } else {
         const errorData = await res.json();
-        const errorMsg = errorData.details ? `${errorData.error} (${errorData.details})` : (errorData.error || "Une erreur est survenue lors de la commande.");
-        showToast(errorMsg, "error");
+        showToast(`Erreur: ${JSON.stringify(errorData)}`, "error");
       }
     } catch (e) {
       console.error(e);
