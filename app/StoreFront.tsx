@@ -855,21 +855,21 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <div
                         onClick={() => setSelectedBox({ price: 0, name: t.no_box, img: "original" })}
-                        className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === 0 ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
+                        className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.img === "original" ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
                       >
-                        <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.price === 0 ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
+                        <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.img === "original" ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
                         <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{t.no_box}</div>
-                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === 0 ? "text-gold" : "text-gray-400"}`}>+0 {t.currency}</div>
+                        <div className={`text-[10px] md:text-xs font-bold ${selectedBox.img === "original" ? "text-gold" : "text-gray-400"}`}>+0 {t.currency}</div>
                       </div>
                       {(selectedProduct.boxes || []).map((b: any, idx: number) => (
                         <div
                           key={idx}
                           onClick={() => setSelectedBox({ price: b.price, name: b.name, img: b.img })}
-                          className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.price === b.price ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
+                          className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.name === b.name && selectedBox.img !== "original" ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
                         >
                           <img src={b.img} className="w-6 h-6 object-cover rounded-full mx-auto mb-1 border border-gray-200" alt="Box" />
                           <div className="text-[8px] md:text-[9px] font-bold uppercase leading-tight h-6 flex items-center justify-center dark:text-gray-200">{b.name}</div>
-                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.price === b.price ? "text-gold" : "text-gray-400"}`}>+{b.price} {t.currency}</div>
+                          <div className={`text-[10px] md:text-xs font-bold ${selectedBox.name === b.name && selectedBox.img !== "original" ? "text-gold" : "text-gray-400"}`}>+{b.price} {t.currency}</div>
                         </div>
                       ))}
                     </div>
