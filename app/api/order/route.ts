@@ -1,12 +1,29 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import clientPromise from '@/lib/mongodb';
 
 export async function POST(request: Request) {
     try {
         const body = await request.json();
-        const { customer, cart, total } = body;
+        const { customer, cart, total, shipping } = body;
 
-        // Configuration du transporteur d'email (SMTP)
+        // 1. Sauvegarde dans la base de données (Sécurité absolue pour ne perdre aucune commande)
+        try {
+            const client = await clientPromise;
+            const db = client.db('saoudi_store');
+            await db.collection('orders').insertOne({
+                customer,
+                cart,
+                total,
+                shipping,
+                status: 'nouvelle',
+                date: new Date()
+            });
+        } catch (dbError) {
+            console.error("Erreur DB:", dbError);
+        }
+
+        // 2. Configuration du transporteur d'email (SMTP)
         const transporter = nodemailer.createTransport({
             service: 'gmail', // Utilise Gmail par défaut.
             auth: {
