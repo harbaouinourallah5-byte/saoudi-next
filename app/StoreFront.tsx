@@ -22,6 +22,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [selectedBox, setSelectedBox] = useState({ price: 0, name: "Sans Boîte", img: "original" });
   const [selectedColor, setSelectedColor] = useState<any>(null);
   const [modalMainImg, setModalMainImg] = useState("");
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
   
   // Auth State
   const [user, setUser] = useState<any>(null);
@@ -144,6 +145,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         setSelectedColor(null);
         setModalMainImg(product.img);
     }
+    setSelectedQuantity(1);
     setIsProductModalOpen(true);
     document.body.style.overflow = "hidden";
   };
@@ -174,7 +176,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       product: selectedProduct,
       box: selectedBox,
       color: selectedColor,
-      price: selectedProduct.price + selectedBox.price
+      price: selectedProduct.price + selectedBox.price,
+      qty: selectedQuantity
     };
     const newCart = [...cart, newItem];
     setCart(newCart);
@@ -191,7 +194,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
   };
 
-  const cartSubtotal = cart.reduce((sum, item) => sum + item.price, 0);
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
   const cartShipping = cart.length > 0 ? (cart.some(item => item.product.freeShipping) ? 0 : 8.5) : 0;
   const cartTotal = cartSubtotal + cartShipping;
 
@@ -208,7 +211,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const cartData = cart.map((item) => ({
       title: item.product.title,
       price: item.price,
-      qty: 1, // Quantity is 1 per cart item entry
+      qty: item.qty || 1,
       box: item.product.allowBoxes !== false ? item.box.name : "Sans Boîte",
       color: item.color ? item.color.name : null,
     }));
@@ -768,9 +771,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <span>Prix du Produit <span className="italic text-gray-400">{selectedProduct.allowBoxes !== false ? (selectedBox.price > 0 ? `(+ ${selectedBox.name})` : "(Sans Boîte)") : ""}</span></span>
                     <span className="font-semibold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
                   </div>
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Quantité</label>
+                    <div className="flex items-center space-x-3 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-800">
+                        <button type="button" onClick={() => setSelectedQuantity(Math.max(1, selectedQuantity - 1))} className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gold transition font-bold text-lg">-</button>
+                        <span className="font-bold w-6 text-center text-gray-900 dark:text-white">{selectedQuantity}</span>
+                        <button type="button" onClick={() => setSelectedQuantity(selectedQuantity + 1)} className="px-3 py-1 text-gray-600 dark:text-gray-300 hover:text-gold transition font-bold text-lg">+</button>
+                    </div>
+                  </div>
                   <div className="flex justify-between font-bold text-lg text-gray-900 dark:text-white border-t border-gray-200 dark:border-gray-600 pt-3 mt-1">
                     <span>Total de l'article</span>
-                    <span className="text-gold">{(selectedProduct.price + selectedBox.price).toFixed(1)} DT</span>
+                    <span className="text-gold">{((selectedProduct.price + selectedBox.price) * selectedQuantity).toFixed(1)} DT</span>
                   </div>
                 </div>
                 {selectedProduct.inStock !== false ? (
@@ -831,7 +842,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{item.product.title}</h4>
                       {item.color && <span className="text-xs text-gray-500 flex items-center gap-1 mt-1"><div className="w-3 h-3 rounded-full border border-gray-300" style={{backgroundColor: item.color.hex}}></div> {item.color.name}</span>}
                       {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">Boîte: {item.box.name}</span>}
-                      <span className="text-gold font-bold mt-1">{item.price.toFixed(1)} DT</span>
+                      <div className="flex justify-between items-center pr-6 mt-1">
+                          <span className="text-gray-600 dark:text-gray-400 text-xs font-bold">Qté: {item.qty || 1}</span>
+                          <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} DT</span>
+                      </div>
                     </div>
                     <button onClick={() => removeFromCart(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition">
                       <i className="fas fa-trash-alt"></i>
