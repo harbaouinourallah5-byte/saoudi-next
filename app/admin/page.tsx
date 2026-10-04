@@ -31,6 +31,7 @@ export default function AdminPage() {
     const [boxQuantity, setBoxQuantity] = useState(0);
     const [boxes, setBoxes] = useState<{name: string, price: string, img: string}[]>([]);
     const [prodColors, setProdColors] = useState<{name: string, hex: string, quantity: number, image: string}[]>([]);
+    const [combinations, setCombinations] = useState<Record<string, string>>({});
     
     // State for editing mode
     const [editingProductTitle, setEditingProductTitle] = useState("");
@@ -259,7 +260,8 @@ export default function AdminPage() {
                     boxes: productBoxes,
                     img: prodImg || 'assets/logo.jpg',
                     gallery: prodGallery,
-                    colors: prodColors
+                    colors: prodColors,
+                    combinations
                 })
             });
 
@@ -274,6 +276,7 @@ export default function AdminPage() {
                 setProdImg("");
                 setProdGallery([]);
                 setProdColors([]);
+                setCombinations({});
                 setInStock(true);
                 setFreeShipping(false);
                 setAllowBoxes(true);
@@ -316,6 +319,7 @@ export default function AdminPage() {
         setProdImg(product.img || "");
         setProdGallery(product.gallery || []);
         setProdColors(product.colors || []);
+        setCombinations(product.combinations || {});
         setInStock(product.inStock !== false);
         setFreeShipping(product.freeShipping === true);
         
@@ -471,6 +475,7 @@ export default function AdminPage() {
                                     setProdImg("");
                                     setBoxes([]);
                                     setBoxQuantity(0);
+                                    setCombinations({});
                                 }}
                                 className="text-sm bg-red-100 text-red-600 px-3 py-1 rounded hover:bg-red-200 transition"
                             >
@@ -755,6 +760,59 @@ export default function AdminPage() {
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+                                </div>
+                            )}
+                            {prodColors.length > 0 && boxes.length > 0 && (
+                                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                                    <h3 className="text-xl font-bold mb-4 text-gray-800"><i className="fas fa-layer-group text-yellow-500 mr-2"></i>Photos des Combinaisons (Optionnel)</h3>
+                                    <p className="text-sm text-gray-500 mb-6">Ajoutez une photo spécifique pour chaque combinaison (Couleur + Boîte). Si vide, l'image de la couleur choisie sera affichée.</p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                                        {prodColors.map(color => boxes.map(box => {
+                                            const comboKey = `${color.name}---${box.name}`;
+                                            return (
+                                                <div key={comboKey} className="border border-gray-300 rounded p-4 bg-white shadow-sm flex flex-col items-center">
+                                                    <span className="text-xs font-bold text-gray-700 mb-2 text-center uppercase">{color.name} + {box.name}</span>
+                                                    {combinations[comboKey] ? (
+                                                        <div className="relative mb-2 w-full flex justify-center">
+                                                            <img src={combinations[comboKey]} className="h-20 w-20 object-cover rounded shadow" alt="combo" />
+                                                            <button 
+                                                                type="button" 
+                                                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 transition"
+                                                                style={{ transform: 'translate(25%, -25%)' }}
+                                                                onClick={() => {
+                                                                    const newC = {...combinations};
+                                                                    delete newC[comboKey];
+                                                                    setCombinations(newC);
+                                                                }}
+                                                            >
+                                                                <i className="fas fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded text-xs font-bold transition w-full text-center mb-2">
+                                                            <i className="fas fa-upload mr-1"></i> Image
+                                                            <input 
+                                                                type="file" 
+                                                                accept="image/*" 
+                                                                className="hidden" 
+                                                                onChange={(e) => {
+                                                                    const file = e.target.files?.[0];
+                                                                    if(!file) return;
+                                                                    const reader = new FileReader();
+                                                                    reader.onload = (ev) => {
+                                                                        if (ev.target?.result) {
+                                                                            setCombinations(prev => ({ ...prev, [comboKey]: ev.target!.result as string }));
+                                                                        }
+                                                                    };
+                                                                    reader.readAsDataURL(file);
+                                                                }}
+                                                            />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                            );
+                                        }))}
                                     </div>
                                 </div>
                             )}

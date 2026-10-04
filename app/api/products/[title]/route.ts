@@ -97,6 +97,14 @@ export async function PUT(request: Request, props: { params: Promise<{ title: st
             }
         }
 
+        if (product.combinations && typeof product.combinations === 'object') {
+            for (const key in product.combinations) {
+                if (product.combinations[key] && product.combinations[key].startsWith('data:image')) {
+                    product.combinations[key] = saveBase64Image(product.combinations[key]);
+                }
+            }
+        }
+
         // Remove _id from payload if it exists so we don't try to override immutable _id
         const { _id, ...updateData } = product;
 

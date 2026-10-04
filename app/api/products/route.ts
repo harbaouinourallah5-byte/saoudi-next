@@ -102,6 +102,14 @@ export async function POST(request: Request) {
             }
         }
 
+        if (product.combinations && typeof product.combinations === 'object') {
+            for (const key in product.combinations) {
+                if (product.combinations[key] && product.combinations[key].startsWith('data:image')) {
+                    product.combinations[key] = saveBase64Image(product.combinations[key]);
+                }
+            }
+        }
+
         await db.collection('products').insertOne(product);
         return NextResponse.json({ success: true });
     } catch (e: any) {

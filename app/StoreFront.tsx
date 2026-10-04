@@ -854,7 +854,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                     <label className="block text-[10px] md:text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wide mb-2">{t.box_choice}</label>
                     <div className="grid grid-cols-3 gap-2 mb-2">
                       <div
-                        onClick={() => setSelectedBox({ price: 0, name: t.no_box, img: "original" })}
+                        onClick={() => {
+                            setSelectedBox({ price: 0, name: t.no_box, img: "original" });
+                            setModalMainImg(selectedColor?.image || selectedProduct.img);
+                        }}
                         className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.img === "original" ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
                       >
                         <i className={`fas fa-gem text-lg md:text-xl mb-1 block ${selectedBox.img === "original" ? "text-gold" : "text-gray-400 dark:text-gray-500"}`}></i>
@@ -864,7 +867,15 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       {(selectedProduct.boxes || []).map((b: any, idx: number) => (
                         <div
                           key={idx}
-                          onClick={() => setSelectedBox({ price: b.price, name: b.name, img: b.img })}
+                          onClick={() => {
+                              setSelectedBox({ price: b.price, name: b.name, img: b.img });
+                              const comboKey = `${selectedColor?.name}---${b.name}`;
+                              if (selectedColor && selectedProduct.combinations && selectedProduct.combinations[comboKey]) {
+                                  setModalMainImg(selectedProduct.combinations[comboKey]);
+                              } else {
+                                  setModalMainImg(selectedColor?.image || selectedProduct.img);
+                              }
+                          }}
                           className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.name === b.name && selectedBox.img !== "original" ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
                         >
                           <img src={b.img} className="w-6 h-6 object-cover rounded-full mx-auto mb-1 border border-gray-200" alt="Box" />
@@ -887,9 +898,13 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                             key={idx}
                             onClick={() => {
                               setSelectedColor(color);
-                              if (color.image) {
-                                setModalMainImg(color.image);
-                                setSelectedBox({ ...selectedBox, img: "original" });
+                              const comboKey = `${color.name}---${selectedBox.name}`;
+                              if (selectedBox.img !== "original" && selectedProduct.combinations && selectedProduct.combinations[comboKey]) {
+                                  setModalMainImg(selectedProduct.combinations[comboKey]);
+                              } else if (color.image) {
+                                  setModalMainImg(color.image);
+                              } else {
+                                  setModalMainImg(selectedProduct.img);
                               }
                             }}
                             className={`cursor-pointer rounded-full p-1 border-2 transition-all ${isSelected ? 'border-gold scale-110' : 'border-transparent hover:border-gray-300'}`}
