@@ -11,6 +11,10 @@ export default function AdminPage() {
 
     // State for products list
     const [products, setProducts] = useState<any[]>([]);
+    
+    // State for orders list
+    const [orders, setOrders] = useState<any[]>([]);
+    const [activeTab, setActiveTab] = useState<"products"|"orders">("products");
 
     // State for new product form
     const [prodName, setProdName] = useState("");
@@ -54,6 +58,7 @@ export default function AdminPage() {
                 // Token is kept ONLY in memory for maximum security.
                 setIsLoggedIn(true);
                 loadAdminProducts(data.token);
+                loadOrders(data.token);
             } else {
                 showToast("Nom d'utilisateur ou mot de passe incorrect !", "error");
             }
@@ -69,6 +74,21 @@ export default function AdminPage() {
             const data = await response.json();
             setProducts(data);
         } catch(e) { console.error(e); }
+    };
+
+    const loadOrders = async (token = authToken) => {
+        try {
+            const res = await fetch('/api/orders', {
+                headers: { 'Authorization': 'Bearer ' + token },
+                cache: 'no-store'
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setOrders(data.orders || []);
+            }
+        } catch (e) {
+            console.error("Failed to fetch orders", e);
+        }
     };
 
     const handleProdImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -363,16 +383,18 @@ export default function AdminPage() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sticky top-24">
                         <h3 className="text-gray-400 uppercase tracking-widest text-xs font-bold mb-4">Menu</h3>
                         <ul className="space-y-2">
-                            <li><a href="#ajouter" className="block p-3 rounded-md bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500"><i className="fas fa-plus-circle w-6"></i> Ajouter un Produit</a></li>
-                            <li><a href="#liste" className="block p-3 rounded-md text-gray-600 hover:bg-gray-50 transition"><i className="fas fa-list w-6"></i> Liste des Produits</a></li>
+                            <li><button onClick={() => setActiveTab('products')} className={`block w-full text-left p-3 rounded-md transition ${activeTab === 'products' ? 'bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}><i className="fas fa-box w-6"></i> Produits</button></li>
+                            <li><button onClick={() => setActiveTab('orders')} className={`block w-full text-left p-3 rounded-md transition ${activeTab === 'orders' ? 'bg-gray-50 text-yellow-600 font-bold border-l-4 border-yellow-500' : 'text-gray-600 hover:bg-gray-50'}`}><i className="fas fa-shopping-cart w-6"></i> Commandes {orders.length > 0 && <span className="ml-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">{orders.length}</span>}</button></li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="w-full md:w-3/4">
                     
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 id="ajouter" className="text-2xl font-bold text-gray-800">
+                    {activeTab === 'products' && (
+                        <>
+                            <div className="flex items-center justify-between mb-6">
+                                <h2 id="ajouter" className="text-2xl font-bold text-gray-800">
                             {editingProductTitle ? `Modifier: ${editingProductTitle}` : 'Créer un Nouveau Produit'}
                         </h2>
                         {editingProductTitle && (
@@ -729,6 +751,61 @@ export default function AdminPage() {
                             </tbody>
                         </table>
                     </div>
+                        </>
+                    )}
+
+                    {activeTab === 'orders' && (
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-4xl">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-6"><i className="fas fa-shopping-cart text-yellow-500 mr-2"></i>Liste des Commandes</h2>
+                            
+                            {orders.length === 0 ? (
+                                <div className="text-center py-10 text-gray-500">
+                                    <i className="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
+                                    <p>Aucune commande pour le moment.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    {orders.map((order, idx) => (
+                                        <div key={idx} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
+                                            <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-3">
+                                                <div>
+                                                    <h3 className="font-bold text-lg text-gray-800">{order.customer.name}</h3>
+                                                    <p className="text-sm text-gray-600"><i className="fas fa-phone mr-1"></i>{order.customer.phone}</p>
+                                                    <p className="text-sm text-gray-600"><i className="fas fa-map-marker-alt mr-1"></i>{order.customer.address}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="bg-yellow-100 text-yellow-800 font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">{order.status || 'NOUVELLE'}</span>
+                                                    <p className="text-xs text-gray-400 mt-2">{new Date(order.date).toLocaleString('fr-FR')}</p>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Articles</h4>
+                                                {order.cart.map((item: any, i: number) => (
+                                                    <div key={i} className="flex justify-between items-center bg-white p-2 border border-gray-100 rounded">
+                                                        <div className="flex flex-col">
+                                                            <span className="font-bold text-sm text-gray-800">{item.title}</span>
+                                                            <span className="text-xs text-gray-500">
+                                                                {item.color ? `Couleur: ${item.color} | ` : ''}
+                                                                Boîte: {item.box}
+                                                            </span>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <span className="text-sm text-gray-600">{item.qty}x</span>
+                                                            <span className="font-bold text-yellow-600 ml-3">{item.price} DT</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex justify-between items-center border-t border-gray-200 pt-3 mt-3">
+                                                <span className="text-gray-600 text-sm">Frais de livraison: {order.shipping} DT</span>
+                                                <span className="text-lg font-bold text-gray-900">Total: <span className="text-yellow-600">{order.total} DT</span></span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                 </div>
             </main>
