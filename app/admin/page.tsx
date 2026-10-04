@@ -15,6 +15,7 @@ export default function AdminPage() {
     // State for orders list
     const [orders, setOrders] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<"products"|"orders">("products");
+    const [orderFilter, setOrderFilter] = useState<"toutes"|"nouvelle"|"en attente"|"confirmée"|"rejetée">("nouvelle");
 
     // State for new product form
     const [prodName, setProdName] = useState("");
@@ -830,14 +831,29 @@ export default function AdminPage() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 max-w-4xl">
                             <h2 className="text-2xl font-bold text-gray-800 mb-6"><i className="fas fa-shopping-cart text-yellow-500 mr-2"></i>Liste des Commandes</h2>
                             
-                            {orders.length === 0 ? (
+                            <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-4">
+                                {['toutes', 'nouvelle', 'en attente', 'confirmée', 'rejetée'].map(filter => (
+                                    <button 
+                                        key={filter} 
+                                        onClick={() => setOrderFilter(filter as any)}
+                                        className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition ${
+                                            orderFilter === filter ? 'bg-gray-800 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {filter}
+                                        {filter !== 'toutes' && <span className="ml-2 bg-white/20 px-2 py-0.5 rounded-full">{orders.filter(o => (o.status || 'nouvelle').toLowerCase() === filter).length}</span>}
+                                    </button>
+                                ))}
+                            </div>
+                            
+                            {orders.filter(o => orderFilter === 'toutes' || (o.status || 'nouvelle').toLowerCase() === orderFilter).length === 0 ? (
                                 <div className="text-center py-10 text-gray-500">
                                     <i className="fas fa-box-open text-4xl mb-3 text-gray-300"></i>
-                                    <p>Aucune commande pour le moment.</p>
+                                    <p>Aucune commande dans cette catégorie.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-6">
-                                    {orders.map((order, idx) => (
+                                    {orders.filter(o => orderFilter === 'toutes' || (o.status || 'nouvelle').toLowerCase() === orderFilter).map((order, idx) => (
                                         <div key={idx} className="border border-gray-200 rounded-lg p-4 shadow-sm bg-gray-50">
                                             <div className="flex justify-between items-center border-b border-gray-200 pb-3 mb-3">
                                                 <div>
