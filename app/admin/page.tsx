@@ -768,26 +768,27 @@ export default function AdminPage() {
                                     <h3 className="text-xl font-bold mb-4 text-gray-800"><i className="fas fa-layer-group text-yellow-500 mr-2"></i>Photos des Combinaisons (Optionnel)</h3>
                                     <p className="text-sm text-gray-500 mb-6">Ajoutez une photo spécifique pour chaque combinaison (Couleur + Boîte). Si vide, l'image de la couleur choisie sera affichée.</p>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                                        {prodColors.map(color => boxes.map(box => {
+                                        {prodColors.filter(c => c.name.trim() !== "").map(color => boxes.filter(b => b.name.trim() !== "").map(box => {
                                             const comboKey = `${color.name}---${box.name}`;
                                             return (
                                                 <div key={comboKey} className="border border-gray-300 rounded p-4 bg-white shadow-sm flex flex-col items-center">
                                                     <span className="text-xs font-bold text-gray-700 mb-2 text-center uppercase">{color.name} + {box.name}</span>
                                                     {combinations[comboKey] ? (
-                                                        <div className="relative mb-2 w-full flex justify-center">
-                                                            <img src={combinations[comboKey]} className="h-20 w-20 object-cover rounded shadow" alt="combo" />
-                                                            <button 
-                                                                type="button" 
-                                                                className="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 transition"
-                                                                style={{ transform: 'translate(25%, -25%)' }}
-                                                                onClick={() => {
-                                                                    const newC = {...combinations};
-                                                                    delete newC[comboKey];
-                                                                    setCombinations(newC);
-                                                                }}
-                                                            >
-                                                                <i className="fas fa-times"></i>
-                                                            </button>
+                                                        <div className="mb-2 w-full flex justify-center">
+                                                            <div className="relative inline-block">
+                                                                <img src={combinations[comboKey]} className="h-20 w-20 object-cover rounded shadow" alt="combo" />
+                                                                <button 
+                                                                    type="button" 
+                                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs shadow hover:bg-red-600 transition z-10"
+                                                                    onClick={() => {
+                                                                        const newC = {...combinations};
+                                                                        delete newC[comboKey];
+                                                                        setCombinations(newC);
+                                                                    }}
+                                                                >
+                                                                    <i className="fas fa-times"></i>
+                                                                </button>
+                                                            </div>
                                                         </div>
                                                     ) : (
                                                         <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded text-xs font-bold transition w-full text-center mb-2">
