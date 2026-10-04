@@ -654,7 +654,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                             <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition duration-300">
                                 <button className="bg-white text-gray-900 px-4 py-2 rounded-full flex items-center space-x-2 transform translate-y-4 group-hover:translate-y-0 transition duration-300 shadow-lg hover:bg-gold hover:text-white">
                                   <i className="fas fa-shopping-bag text-lg"></i>
-                                  <span className="text-xs font-bold uppercase tracking-wider">Commander</span>
+                                  <span className="text-xs font-bold uppercase tracking-wider">{t.order_now}</span>
                                 </button>
                             </div>
                           )}

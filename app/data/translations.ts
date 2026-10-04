@@ -4,7 +4,7 @@ export const translations = {
     boutique: "المتجر",
     contact: "اتصل بنا",
     admin: "لوحة القيادة",
-    order_now: "أطلب الان",
+    order_now: "أطلب الآن",
     shipping_banner: "🚚 التوصيل لكامل تراب الجمهورية 🇹🇳 (8.5 دينار)",
     search: "بحث (اسم، نوع...)",
     categories: "الأصناف",
