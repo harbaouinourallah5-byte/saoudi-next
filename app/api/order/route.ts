@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
-            to: process.env.RECEIVER_EMAIL || process.env.EMAIL_USER, // S'envoie à lui-même ou au RECEIVER_EMAIL
+            to: 'saoudiaccessoire@gmail.com', // Reçoit toutes les commandes ici
             subject: `🚀 Nouvelle Commande - ${customer.name}`,
             html: `
                 <div style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
