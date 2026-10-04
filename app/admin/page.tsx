@@ -80,7 +80,7 @@ export default function AdminPage() {
 
     const loadOrders = async (token = authToken) => {
         try {
-            const res = await fetch('/api/orders', {
+            const res = await fetch(`/api/orders?t=${Date.now()}`, {
                 headers: { 'Authorization': 'Bearer ' + token },
                 cache: 'no-store'
             });
