@@ -970,8 +970,14 @@ export default function AdminPage() {
                                                     </>
                                                 )}
                                                 {order.status === 'confirmée' && (
-                                                    <div className="w-full text-center text-green-600 font-bold bg-green-50 py-2 rounded">
-                                                        <i className="fas fa-check-circle mr-2"></i> Commande Confirmée
+                                                    <div className="w-full text-center text-green-600 font-bold bg-green-50 py-2 rounded flex justify-between items-center px-4">
+                                                        <span><i className="fas fa-check-circle mr-2"></i> Commande Confirmée</span>
+                                                        <button onClick={async () => {
+                                                            if (confirm('Supprimer définitivement cette commande ?')) {
+                                                                const res = await fetch(`/api/orders/${order._id}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + authToken } });
+                                                                if (res.ok) loadOrders();
+                                                            }
+                                                        }} className="text-red-500 hover:text-red-700 ml-4"><i className="fas fa-trash"></i></button>
                                                     </div>
                                                 )}
                                                 {order.status === 'rejetée' && (
