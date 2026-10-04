@@ -873,7 +873,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                               if (selectedColor && selectedProduct.combinations && selectedProduct.combinations[comboKey]) {
                                   setModalMainImg(selectedProduct.combinations[comboKey]);
                               } else {
-                                  setModalMainImg(selectedColor?.image || selectedProduct.img);
+                                  setModalMainImg(b.img);
                               }
                           }}
                           className={`border-2 rounded-md p-1 md:p-2 text-center cursor-pointer transition ${selectedBox.name === b.name && selectedBox.img !== "original" ? "border-gold bg-gray-700" : "border-gray-600 hover:border-gold"}`}
