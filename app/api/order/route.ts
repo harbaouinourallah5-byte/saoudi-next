@@ -104,6 +104,32 @@ export async function POST(request: Request) {
             // On continue car la commande est bien dans la base de données !
         }
 
+        // 3. Envoi de la notification Telegram
+        try {
+            const TELEGRAM_TOKEN = "8962323796:AAEcdOg4bp0sj1t0aqUUz39NT9ciiitVhG8";
+            const TELEGRAM_CHAT_ID = "8900403575";
+
+            const cartText = cart.map((item: any) => 
+                `- ${item.qty}x ${item.title} (${item.price} DT)\n  Couleur: ${item.color || 'N/A'} | Box: ${item.box}`
+            ).join('\n');
+
+            const telegramMessage = `🛍️ <b>NOUVELLE COMMANDE !</b>\n\n👤 <b>Client:</b> ${customer.name}\n📞 <b>Tél:</b> ${customer.phone}\n📍 <b>Adresse:</b> ${customer.wilaya}, ${customer.delegation}\n🏠 <b>Rue:</b> ${customer.rue || customer.address || 'N/A'}\n\n🛒 <b>Panier:</b>\n${cartText}\n\n🚚 <b>Livraison:</b> 8.5 DT\n💰 <b>TOTAL: ${total} DT</b>`;
+
+            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: telegramMessage,
+                    parse_mode: 'HTML',
+                }),
+            });
+        } catch (telegramError) {
+            console.error("Erreur Telegram:", telegramError);
+        }
+
         return NextResponse.json({ success: true, message: 'Commande envoyée avec succès' });
     } catch (error: any) {
         console.error("Erreur serveur:", error);
