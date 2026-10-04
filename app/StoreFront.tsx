@@ -152,7 +152,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
   useEffect(() => {
     const newFiltered = products.filter((p: any) => {
-      const matchCat = currentCategory === "all" || p.category === currentCategory;
+      const matchCat = currentCategory === "all" || p.category === currentCategory || (currentCategory === "Colliers_Bracelets" && (p.category === "Bracelets" || p.category === "Colliers"));
       const matchGender = genderFilter === "all" || p.gender === genderFilter || !p.gender;
       const matchSearch = p.title.toLowerCase().includes(searchQuery);
       return matchCat && matchSearch && matchGender;
@@ -380,7 +380,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     all: t.cat_all,
     Montres: t.cat_montres,
     Couple: t.cat_couple,
-    Bracelets: t.cat_bracelets,
+    Colliers_Bracelets: t.cat_bracelets,
     Bagues: t.cat_bagues,
     Packs: t.cat_packs,
   };
@@ -595,8 +595,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   {[
                     { id: "all", label: t.cat_all },
                     { id: "Montres", label: t.cat_montres },
-                    { id: "Colliers", label: t.cat_colliers },
-                    { id: "Bracelets", label: t.cat_bracelets },
+                    { id: "Colliers_Bracelets", label: t.cat_bracelets },
                     { id: "Bagues", label: t.cat_bagues },
                     { id: "Couple", label: t.cat_couple },
                     { id: "Packs", label: t.cat_packs },
