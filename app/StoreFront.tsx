@@ -163,7 +163,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   useEffect(() => {
     const newFiltered = products.filter((p: any) => {
       const matchCat = currentCategory === "all" || p.category === currentCategory || (currentCategory === "Colliers_Bracelets" && (p.category === "Bracelets" || p.category === "Colliers"));
-      const matchGender = genderFilter === "all" || p.gender === genderFilter || !p.gender;
+      const matchGender = genderFilter === "all" || p.gender === genderFilter || !p.gender || p.gender === "mixte";
       const matchSearch = p.title.toLowerCase().includes(searchQuery);
       return matchCat && matchSearch && matchGender;
     });
