@@ -41,6 +41,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   // Cart State
   const [cart, setCart] = useState<any[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [collapsedCartItems, setCollapsedCartItems] = useState<string[]>([]);
   
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -992,20 +993,37 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <button onClick={() => setIsCartOpen(false)} className="px-6 py-2 bg-gold text-gray-900 rounded-full font-bold text-sm uppercase">{t.continue_shopping}</button>
                 </div>
               ) : (
-                cart.map(item => (
-                  <div key={item.id} className="flex space-x-4 border border-gray-100 dark:border-gray-700 p-2 rounded-md relative group bg-white dark:bg-gray-800 shadow-sm">
-                    <img src={item.color?.image || item.product.img} className="w-20 h-20 object-cover rounded-sm border border-gray-200" alt={item.product.title} />
-                    <div className="flex-grow flex flex-col justify-center">
-                      <h4 className="font-bold text-sm text-gray-900 dark:text-white leading-tight">{item.product.title}</h4>
-                      {item.color && <span className="text-xs text-gray-500 flex items-center gap-1 mt-1"><div className="w-3 h-3 rounded-full border border-gray-300" style={{backgroundColor: item.color.hex}}></div> {item.color.name}</span>}
-                      {item.product.allowBoxes !== false && <span className="text-xs text-gray-500">{t.box} {item.box.name}</span>}
-                      <div className="flex justify-between items-center pr-6 mt-1">
-                          <span className="text-gray-600 dark:text-gray-400 text-xs font-bold">{t.qty} {item.qty || 1}</span>
+                cart.map(item => {
+                  const isCollapsed = collapsedCartItems.includes(item.id);
+                  const toggleCollapse = () => {
+                    setCollapsedCartItems(prev => prev.includes(item.id) ? prev.filter(i => i !== item.id) : [...prev, item.id]);
+                  };
+                  return (
+                    <div key={item.id} className="border border-gray-100 dark:border-gray-700 rounded-md bg-white dark:bg-gray-800 shadow-sm overflow-hidden mb-3">
+                      <div className="flex justify-between items-center p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition" onClick={toggleCollapse}>
+                        <h4 className="font-bold text-sm text-gray-900 dark:text-white flex-1">{item.product.title}</h4>
+                        <div className="flex items-center space-x-3">
                           <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} {t.currency}</span>
+                          <i className={`fas fa-chevron-${isCollapsed ? 'down' : 'up'} text-gray-400 text-xs transition-transform`}></i>
+                        </div>
                       </div>
+                      
+                      {!isCollapsed && (
+                        <div className="p-3 pt-0 flex space-x-4 border-t border-gray-50 dark:border-gray-700 mt-2 pt-3 relative bg-gray-50 dark:bg-gray-800/50">
+                          <img src={item.color?.image || item.product.img} className="w-20 h-20 object-cover rounded-sm border border-gray-200" alt={item.product.title} />
+                          <div className="flex-grow flex flex-col justify-center">
+                            {item.color && <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1"><div className="w-3 h-3 rounded-full border border-gray-300" style={{backgroundColor: item.color.hex}}></div> {item.color.name}</span>}
+                            {item.product.allowBoxes !== false && <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t.box} {item.box.name}</span>}
+                            <span className="text-gray-600 dark:text-gray-400 text-xs font-bold mt-1">{t.qty} {item.qty || 1}</span>
+                          </div>
+                          <button onClick={() => removeFromCart(item.id)} className="absolute bottom-3 right-3 text-red-500 hover:text-white hover:bg-red-500 bg-red-50 w-8 h-8 rounded-full flex items-center justify-center transition shadow-sm border border-red-100" title="Supprimer cet article">
+                            <i className="fas fa-trash-alt text-xs"></i>
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
 
               {cart.length > 0 && (
@@ -1054,24 +1072,18 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <span className="text-gold">{cartTotal.toFixed(1)} {t.currency}</span>
                 </div>
                 
-                <div className="flex space-x-2 mt-4">
-                  <button type="button" onClick={() => setCart([])} className="w-1/3 bg-red-100 text-red-600 border border-red-200 font-bold py-3 rounded-md flex items-center justify-center shadow-md hover:bg-red-200 transition text-sm uppercase tracking-wider">
-                    <i className="fas fa-trash-alt mr-2"></i>
-                    <span>{t.empty_cart_btn}</span>
-                  </button>
-                  <button 
-                    onClick={submitCartOrder} 
-                    disabled={isSubmittingOrder}
-                    className="w-2/3 bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                  >
-                    {isSubmittingOrder ? (
-                      <i className="fas fa-spinner fa-spin text-lg"></i>
-                    ) : (
-                      <i className="fas fa-check-circle text-lg"></i>
-                    )}
-                    <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
-                  </button>
-                </div>
+                <button 
+                  onClick={submitCartOrder} 
+                  disabled={isSubmittingOrder}
+                  className="w-full bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingOrder ? (
+                    <i className="fas fa-spinner fa-spin text-lg"></i>
+                  ) : (
+                    <i className="fas fa-check-circle text-lg"></i>
+                  )}
+                  <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
+                </button>
               </div>
             )}
           </div>
