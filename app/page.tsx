@@ -11,7 +11,7 @@ export default async function Page() {
         const client = await clientPromise;
         const db = client.db('saoudi_store');
         
-        const products = await db.collection('products').find({}).toArray();
+        const products = await db.collection('products').find({}).sort({ position: 1, _id: -1 }).toArray();
         const boxes = await db.collection('boxes').find({}).toArray();
         
         safeProducts = products.map(p => ({...p, _id: p._id.toString()}));

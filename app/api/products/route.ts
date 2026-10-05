@@ -49,7 +49,7 @@ export async function GET() {
         
         // Find products, excluding massive fields if needed, but since we are converting them,
         // new ones will just have short URLs
-        const products = await db.collection('products').find({}).toArray();
+        const products = await db.collection('products').find({}).sort({ position: 1, _id: -1 }).toArray();
         return NextResponse.json(products);
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });

@@ -378,6 +378,49 @@ export default function AdminPage() {
         }
     };
 
+    const moveProduct = async (index: number, direction: 'up' | 'down') => {
+        if (
+            (direction === 'up' && index === 0) || 
+            (direction === 'down' && index === products.length - 1)
+        ) return;
+
+        const currentProducts = [...products];
+        const swapIndex = direction === 'up' ? index - 1 : index + 1;
+
+        // Ensure all products have a position before swapping
+        currentProducts.forEach((p, i) => {
+            if (p.position === undefined) p.position = i;
+        });
+
+        const tempPos = currentProducts[index].position;
+        currentProducts[index].position = currentProducts[swapIndex].position;
+        currentProducts[swapIndex].position = tempPos;
+
+        // Sort them immediately for optimistic UI
+        currentProducts.sort((a, b) => a.position - b.position);
+        setProducts(currentProducts);
+
+        try {
+            await fetch('/api/products/reorder', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify({ 
+                    products: [
+                        { _id: currentProducts[index]._id, position: currentProducts[index].position },
+                        { _id: currentProducts[swapIndex]._id, position: currentProducts[swapIndex].position }
+                    ]
+                })
+            });
+            loadAdminProducts();
+        } catch (e) {
+            console.error(e);
+            showToast("Erreur lors de la réorganisation", "error");
+        }
+    };
+
     return (
         <div className="text-gray-800 font-sans min-h-screen bg-[#050505]">
             
@@ -870,7 +913,13 @@ export default function AdminPage() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-4 text-right space-x-2">
+                                        <td className="p-4 text-right space-x-1">
+                                            <button onClick={() => moveProduct(idx, 'up')} disabled={idx === 0} className={`p-2 rounded text-sm transition ${idx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200'}`} title="Monter">
+                                                <i className="fas fa-arrow-up"></i>
+                                            </button>
+                                            <button onClick={() => moveProduct(idx, 'down')} disabled={idx === products.length - 1} className={`p-2 rounded text-sm mr-2 transition ${idx === products.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200'}`} title="Descendre">
+                                                <i className="fas fa-arrow-down"></i>
+                                            </button>
                                             <button onClick={() => editProduct(p)} className="text-blue-500 hover:text-blue-700 bg-blue-50 p-2 rounded text-sm mr-2 transition">
                                                 <i className="fas fa-edit"></i>
                                             </button>

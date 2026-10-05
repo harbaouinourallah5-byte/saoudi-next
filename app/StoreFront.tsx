@@ -170,6 +170,19 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setFilteredProducts(newFiltered);
   }, [products, currentCategory, searchQuery, genderFilter]);
 
+  useEffect(() => {
+    if (typeof window !== "undefined" && products.length > 0) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const productId = urlParams.get("product");
+      if (productId) {
+        const targetProduct = products.find(p => p._id === productId);
+        if (targetProduct) {
+          openModal(targetProduct);
+        }
+      }
+    }
+  }, [products]);
+
 
 
   // Product Modal Logic
@@ -186,6 +199,11 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setSelectedQuantity(1);
     setIsProductModalOpen(true);
     document.body.style.overflow = "hidden";
+    if (typeof window !== "undefined") {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.set("product", product._id);
+      window.history.pushState({}, '', currentUrl.toString());
+    }
   };
 
   const carouselImages = useMemo(() => {
@@ -225,6 +243,11 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setIsProductModalOpen(false);
     setSelectedProduct(null);
     document.body.style.overflow = "auto";
+    if (typeof window !== "undefined") {
+      const currentUrl = new URL(window.location.href);
+      currentUrl.searchParams.delete("product");
+      window.history.pushState({}, '', currentUrl.toString());
+    }
   };
 
   const handleMouseMove = (e: any) => {
