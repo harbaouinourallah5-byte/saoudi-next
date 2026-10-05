@@ -49,7 +49,8 @@ export const translations = {
     gender_all: "الكل",
     gender_women: "نسائي 👩",
     gender_men: "رجالي 👨",
-    gender_unisex: "للجنسين 👫"
+    gender_unisex: "للجنسين 👫",
+    empty_cart_btn: "إلغاء الطلب"
   },
   fr: {
     home: "Accueil",
@@ -101,7 +102,8 @@ export const translations = {
     gender_all: "Tous",
     gender_women: "Femme 👩",
     gender_men: "Homme 👨",
-    gender_unisex: "Mixte 👫"
+    gender_unisex: "Mixte 👫",
+    empty_cart_btn: "Annuler la commande"
   },
   en: {
     home: "Home",
@@ -153,7 +155,8 @@ export const translations = {
     gender_all: "All",
     gender_women: "Women 👩",
     gender_men: "Men 👨",
-    gender_unisex: "Unisex 👫"
+    gender_unisex: "Unisex 👫",
+    empty_cart_btn: "Cancel Order"
   }
 };
 export type Language = 'ar' | 'fr' | 'en';

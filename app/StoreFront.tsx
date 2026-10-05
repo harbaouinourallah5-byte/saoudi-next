@@ -261,8 +261,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
   const submitCartOrder = async () => {
     if (cart.length === 0) return;
-    if (!formName || !formPhone || !formWilaya || !formDelegation || !formRue) {
-      showToast("S'il vous plaît, remplissez toutes vos informations de livraison.", "error");
+    if (!formName || !formPhone || !formWilaya || !formDelegation) {
+      showToast("S'il vous plaît, remplissez vos informations de livraison.", "error");
       return;
     }
 
@@ -1002,9 +1002,6 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                           <span className="text-gold font-bold">{(item.price * (item.qty || 1)).toFixed(1)} {t.currency}</span>
                       </div>
                     </div>
-                    <button onClick={() => removeFromCart(item.id)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 transition">
-                      <i className="fas fa-trash-alt"></i>
-                    </button>
                   </div>
                 ))
               )}
@@ -1043,18 +1040,25 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <span>{t.total}</span>
                   <span className="text-gold">{cartTotal.toFixed(1)} {t.currency}</span>
                 </div>
-                <button 
-                  onClick={submitCartOrder} 
-                  disabled={isSubmittingOrder}
-                  className="w-full bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                >
-                  {isSubmittingOrder ? (
-                    <i className="fas fa-spinner fa-spin text-lg"></i>
-                  ) : (
-                    <i className="fas fa-check-circle text-lg"></i>
-                  )}
-                  <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
-                </button>
+                
+                <div className="flex space-x-2 mt-4">
+                  <button type="button" onClick={() => setCart([])} className="w-1/3 bg-red-100 text-red-600 border border-red-200 font-bold py-3 rounded-md flex items-center justify-center shadow-md hover:bg-red-200 transition text-sm uppercase tracking-wider">
+                    <i className="fas fa-trash-alt mr-2"></i>
+                    <span>{t.empty_cart_btn}</span>
+                  </button>
+                  <button 
+                    onClick={submitCartOrder} 
+                    disabled={isSubmittingOrder}
+                    className="w-2/3 bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingOrder ? (
+                      <i className="fas fa-spinner fa-spin text-lg"></i>
+                    ) : (
+                      <i className="fas fa-check-circle text-lg"></i>
+                    )}
+                    <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
