@@ -67,15 +67,15 @@ Instructions importantes :
 
         if (!response.ok) {
             console.error("Gemini API Error:", data);
-            return NextResponse.json({ error: "Erreur de l'API AI" }, { status: 500 });
+            return NextResponse.json({ error: "Erreur de l'API AI", details: data }, { status: 500 });
         }
 
         const reply = data.candidates[0].content.parts[0].text;
 
         return NextResponse.json({ reply });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Chat API Error:", error);
-        return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+        return NextResponse.json({ error: "Erreur serveur", details: error.message }, { status: 500 });
     }
 }

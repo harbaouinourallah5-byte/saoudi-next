@@ -285,10 +285,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       if (res.ok && data.reply) {
         setChatMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
       } else {
-        setChatMessages(prev => [...prev, { role: 'ai', text: "Désolé, je rencontre un problème de connexion. 😔" }]);
+        setChatMessages(prev => [...prev, { role: 'ai', text: `Désolé, problème: ${data.error || 'inconnu'} ${data.details ? JSON.stringify(data.details) : ''}` }]);
       }
-    } catch (error) {
-      setChatMessages(prev => [...prev, { role: 'ai', text: "Erreur de connexion. 😔" }]);
+    } catch (error: any) {
+      setChatMessages(prev => [...prev, { role: 'ai', text: `Erreur fatale: ${error.message}` }]);
     } finally {
       setIsChatTyping(false);
     }
