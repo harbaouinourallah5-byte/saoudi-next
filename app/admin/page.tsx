@@ -16,6 +16,7 @@ export default function AdminPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [activeTab, setActiveTab] = useState<"products"|"orders">("products");
     const [orderFilter, setOrderFilter] = useState<"toutes"|"nouvelle"|"en attente"|"confirmée"|"rejetée">("nouvelle");
+    const [adminGenderFilter, setAdminGenderFilter] = useState("all");
 
     // State for new product form
     const [prodName, setProdName] = useState("");
@@ -378,25 +379,29 @@ export default function AdminPage() {
         }
     };
 
-    const moveProduct = async (index: number, direction: 'up' | 'down') => {
+        const displayedProducts = products.filter(p => adminGenderFilter === 'all' || p.gender === adminGenderFilter);
+
+    const moveProduct = async (displayedIndex: number, direction: 'up' | 'down') => {
         if (
-            (direction === 'up' && index === 0) || 
-            (direction === 'down' && index === products.length - 1)
+            (direction === 'up' && displayedIndex === 0) || 
+            (direction === 'down' && displayedIndex === displayedProducts.length - 1)
         ) return;
 
         const currentProducts = [...products];
-        const swapIndex = direction === 'up' ? index - 1 : index + 1;
-
-        // Ensure all products have a position before swapping
         currentProducts.forEach((p, i) => {
             if (p.position === undefined) p.position = i;
         });
 
-        const tempPos = currentProducts[index].position;
-        currentProducts[index].position = currentProducts[swapIndex].position;
-        currentProducts[swapIndex].position = tempPos;
+        const targetId = displayedProducts[displayedIndex]._id;
+        const swapId = direction === 'up' ? displayedProducts[displayedIndex - 1]._id : displayedProducts[displayedIndex + 1]._id;
 
-        // Sort them immediately for optimistic UI
+        const globalTargetIndex = currentProducts.findIndex(p => p._id === targetId);
+        const globalSwapIndex = currentProducts.findIndex(p => p._id === swapId);
+
+        const tempPos = currentProducts[globalTargetIndex].position;
+        currentProducts[globalTargetIndex].position = currentProducts[globalSwapIndex].position;
+        currentProducts[globalSwapIndex].position = tempPos;
+
         currentProducts.sort((a, b) => a.position - b.position);
         setProducts(currentProducts);
 
@@ -409,8 +414,8 @@ export default function AdminPage() {
                 },
                 body: JSON.stringify({ 
                     products: [
-                        { _id: currentProducts[index]._id, position: currentProducts[index].position },
-                        { _id: currentProducts[swapIndex]._id, position: currentProducts[swapIndex].position }
+                        { _id: targetId, position: currentProducts[globalTargetIndex].position },
+                        { _id: swapId, position: currentProducts[globalSwapIndex].position }
                     ]
                 })
             });
@@ -421,38 +426,33 @@ export default function AdminPage() {
         }
     };
 
-    const handleDirectPositionChange = async (index: number, newPosStr: string) => {
+    const handleDirectPositionChange = async (displayedIndex: number, newPosStr: string) => {
         const newPos = parseInt(newPosStr);
-        if (isNaN(newPos) || newPos < 1) return;
+        if (isNaN(newPos) || newPos < 1 || newPos > displayedProducts.length) return;
         
-        // Convert to 0-indexed for internal logic (user sees 1-indexed)
         const targetIndex = newPos - 1;
-        
         const currentProducts = [...products];
-        // Initialize positions if undefined
         currentProducts.forEach((p, i) => {
             if (p.position === undefined) p.position = i;
         });
 
-        const targetProduct = currentProducts[index];
-        const oldPos = targetProduct.position;
-        
-        if (oldPos === targetIndex) return;
+        if (displayedIndex === targetIndex) return;
 
-        targetProduct.position = targetIndex;
+        const newDisplayed = [...displayedProducts];
+        const [movedItem] = newDisplayed.splice(displayedIndex, 1);
+        newDisplayed.splice(targetIndex, 0, movedItem);
 
-        if (targetIndex > oldPos) {
-            currentProducts.forEach((p, i) => {
-                if (i !== index && p.position > oldPos && p.position <= targetIndex) p.position -= 1;
-            });
-        } else {
-            currentProducts.forEach((p, i) => {
-                if (i !== index && p.position >= targetIndex && p.position < oldPos) p.position += 1;
-            });
-        }
+        const extractedPositions = newDisplayed.map(p => {
+            const gp = currentProducts.find(cp => cp._id === p._id);
+            return gp?.position || 0;
+        }).sort((a, b) => a - b);
+
+        newDisplayed.forEach((p, i) => {
+            const gp = currentProducts.find(cp => cp._id === p._id);
+            if (gp) gp.position = extractedPositions[i];
+        });
 
         currentProducts.sort((a, b) => a.position - b.position);
-        currentProducts.forEach((p, i) => p.position = i);
         setProducts(currentProducts);
 
         try {
@@ -463,7 +463,7 @@ export default function AdminPage() {
                     'Authorization': 'Bearer ' + authToken
                 },
                 body: JSON.stringify({ 
-                    products: currentProducts.map(p => ({ _id: p._id, position: p.position }))
+                    products: newDisplayed.map((p, i) => ({ _id: p._id, position: extractedPositions[i] }))
                 })
             });
             showToast("Ordre mis à jour", "success");
@@ -922,7 +922,20 @@ export default function AdminPage() {
                         </form>
                     </div>
 
-                    <h3 id="liste" className="text-xl font-bold mb-6 max-w-4xl">Vos Produits</h3>
+                    <div className="flex items-center justify-between max-w-4xl mb-6">
+    <h3 id="liste" className="text-xl font-bold">Vos Produits</h3>
+    <div className="flex space-x-2">
+        {['all', 'homme', 'femme', 'mixte'].map((g) => (
+            <button 
+                key={g} 
+                onClick={() => setAdminGenderFilter(g)} 
+                className={px-3 py-1 rounded text-sm font-bold uppercase tracking-wider transition }
+            >
+                {g === 'all' ? 'Tous' : g}
+            </button>
+        ))}
+    </div>
+</div>
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-4xl mb-12">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -933,7 +946,7 @@ export default function AdminPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {products.map((p, idx) => (
+                                {displayedProducts.map((p, idx) => (
                                     <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="p-4 flex items-center space-x-3">
                                             <img src={p.img} className="h-12 w-12 rounded object-cover shadow-sm" alt={p.title} />
@@ -1127,3 +1140,5 @@ export default function AdminPage() {
         </div>
     );
 }
+
+
