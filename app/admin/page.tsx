@@ -922,20 +922,20 @@ export default function AdminPage() {
                         </form>
                     </div>
 
-                    <div className="flex items-center justify-between max-w-4xl mb-6">
-    <h3 id="liste" className="text-xl font-bold">Vos Produits</h3>
-    <div className="flex space-x-2">
-        {['all', 'homme', 'femme', 'mixte'].map((g) => (
-            <button 
-                key={g} 
-                onClick={() => setAdminGenderFilter(g)} 
-                className={px-3 py-1 rounded text-sm font-bold uppercase tracking-wider transition }
-            >
-                {g === 'all' ? 'Tous' : g}
-            </button>
-        ))}
-    </div>
-</div>
+                                        <div className="flex items-center justify-between max-w-4xl mb-6">
+                        <h3 id="liste" className="text-xl font-bold">Vos Produits</h3>
+                        <div className="flex space-x-2">
+                            {['all', 'homme', 'femme', 'mixte'].map((g) => (
+                                <button 
+                                    key={g} 
+                                    onClick={() => setAdminGenderFilter(g)} 
+                                    className={"px-3 py-1 rounded text-sm font-bold uppercase tracking-wider transition " + (adminGenderFilter === g ? "bg-yellow-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200")}
+                                >
+                                    {g === 'all' ? 'Tous' : g}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden max-w-4xl mb-12">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -1140,5 +1140,6 @@ export default function AdminPage() {
         </div>
     );
 }
+
 
 
