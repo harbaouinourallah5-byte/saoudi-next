@@ -421,6 +421,59 @@ export default function AdminPage() {
         }
     };
 
+    const handleDirectPositionChange = async (index: number, newPosStr: string) => {
+        const newPos = parseInt(newPosStr);
+        if (isNaN(newPos) || newPos < 1) return;
+        
+        // Convert to 0-indexed for internal logic (user sees 1-indexed)
+        const targetIndex = newPos - 1;
+        
+        const currentProducts = [...products];
+        // Initialize positions if undefined
+        currentProducts.forEach((p, i) => {
+            if (p.position === undefined) p.position = i;
+        });
+
+        const targetProduct = currentProducts[index];
+        const oldPos = targetProduct.position;
+        
+        if (oldPos === targetIndex) return;
+
+        targetProduct.position = targetIndex;
+
+        if (targetIndex > oldPos) {
+            currentProducts.forEach((p, i) => {
+                if (i !== index && p.position > oldPos && p.position <= targetIndex) p.position -= 1;
+            });
+        } else {
+            currentProducts.forEach((p, i) => {
+                if (i !== index && p.position >= targetIndex && p.position < oldPos) p.position += 1;
+            });
+        }
+
+        currentProducts.sort((a, b) => a.position - b.position);
+        currentProducts.forEach((p, i) => p.position = i);
+        setProducts(currentProducts);
+
+        try {
+            await fetch('/api/products/reorder', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + authToken
+                },
+                body: JSON.stringify({ 
+                    products: currentProducts.map(p => ({ _id: p._id, position: p.position }))
+                })
+            });
+            showToast("Ordre mis à jour", "success");
+            loadAdminProducts();
+        } catch (e) {
+            console.error(e);
+            showToast("Erreur lors de la réorganisation", "error");
+        }
+    };
+
     return (
         <div className="text-gray-800 font-sans min-h-screen bg-[#050505]">
             
@@ -913,7 +966,25 @@ export default function AdminPage() {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="p-4 text-right space-x-1">
+                                        <td className="p-4 text-right flex items-center justify-end space-x-1">
+                                            <input 
+                                                type="number" 
+                                                min="1"
+                                                className="w-12 border border-gray-300 rounded p-1 text-center text-sm mr-2" 
+                                                placeholder={(idx + 1).toString()}
+                                                onBlur={(e) => {
+                                                    if (e.target.value) {
+                                                        handleDirectPositionChange(idx, e.target.value);
+                                                        e.target.value = ''; // Reset after blur
+                                                    }
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        e.currentTarget.blur();
+                                                    }
+                                                }}
+                                                title="Entrez un numéro de position (ex: 3) et appuyez sur Entrée"
+                                            />
                                             <button onClick={() => moveProduct(idx, 'up')} disabled={idx === 0} className={`p-2 rounded text-sm transition ${idx === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200'}`} title="Monter">
                                                 <i className="fas fa-arrow-up"></i>
                                             </button>
