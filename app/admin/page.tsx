@@ -922,6 +922,9 @@ export default function AdminPage() {
                                                     <h3 className="font-bold text-lg text-gray-800">{order.customer.name}</h3>
                                                     <p className="text-sm text-gray-600"><i className="fas fa-phone mr-1"></i>{order.customer.phone}</p>
                                                     <p className="text-sm text-gray-600"><i className="fas fa-map-marker-alt mr-1"></i>{order.customer.address}</p>
+                                                    {order.customer.notes && (
+                                                        <p className="text-sm mt-2 p-2 bg-yellow-100 text-yellow-800 border-l-4 border-yellow-500 rounded font-semibold"><i className="fas fa-comment-dots mr-2"></i>Notes: {order.customer.notes}</p>
+                                                    )}
                                                 </div>
                                                 <div className="text-right">
                                                     <span className={`font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider ${

@@ -62,6 +62,7 @@ export async function POST(request: Request) {
                         <p><strong>Wilaya:</strong> ${customer.wilaya || 'N/A'}</p>
                         <p><strong>Délégation:</strong> ${customer.delegation || 'N/A'}</p>
                         <p><strong>Rue / Détails:</strong> ${customer.rue || customer.address}</p>
+                        ${customer.notes ? `<p style="background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107;"><strong>Notes du client:</strong><br/>${customer.notes}</p>` : ''}
 
                         <h3 style="border-bottom: 2px solid #D4AF37; padding-bottom: 5px; color: #D4AF37; margin-top: 30px;">Détails de la Commande</h3>
                         <table style="width: 100%; border-collapse: collapse;">
@@ -113,7 +114,7 @@ export async function POST(request: Request) {
                 `- ${item.qty}x ${item.title} (${item.price} DT)\n  Couleur: ${item.color || 'N/A'} | Box: ${item.box}`
             ).join('\n');
 
-            const telegramMessage = `🛍️ <b>NOUVELLE COMMANDE !</b>\n\n👤 <b>Client:</b> ${customer.name}\n📞 <b>Tél:</b> ${customer.phone}\n📍 <b>Adresse:</b> ${customer.wilaya}, ${customer.delegation}\n🏠 <b>Rue:</b> ${customer.rue || customer.address || 'N/A'}\n\n🛒 <b>Panier:</b>\n${cartText}\n\n🚚 <b>Livraison:</b> 8.5 DT\n💰 <b>TOTAL: ${total} DT</b>`;
+            const telegramMessage = `🛍️ <b>NOUVELLE COMMANDE !</b>\n\n👤 <b>Client:</b> ${customer.name}\n📞 <b>Tél:</b> ${customer.phone}\n📍 <b>Adresse:</b> ${customer.wilaya}, ${customer.delegation}\n🏠 <b>Rue:</b> ${customer.rue || customer.address || 'N/A'}${customer.notes ? `\n📝 <b>Notes:</b> ${customer.notes}` : ''}\n\n🛒 <b>Panier:</b>\n${cartText}\n\n🚚 <b>Livraison:</b> 8.5 DT\n💰 <b>TOTAL: ${total} DT</b>`;
 
             await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                 method: 'POST',

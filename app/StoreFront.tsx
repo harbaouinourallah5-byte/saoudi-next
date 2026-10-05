@@ -61,6 +61,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [formWilaya, setFormWilaya] = useState("");
   const [formDelegation, setFormDelegation] = useState("");
   const [formRue, setFormRue] = useState("");
+  const [formNotes, setFormNotes] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
@@ -292,7 +293,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             address: combinedAddress,
             wilaya: formWilaya,
             delegation: formDelegation,
-            rue: formRue
+            rue: formRue,
+            notes: formNotes
           },
           cart: cartData,
           total: cartTotal.toFixed(1),
@@ -1021,6 +1023,17 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       {formWilaya && tunisiaData[formWilaya].sort().map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                     <input type="text" value={formRue} onChange={e => setFormRue(e.target.value)} placeholder={t.rue} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                  </div>
+                  <div className="mt-4">
+                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
+                      {t.notes_label || "Notes additionnelles"}
+                    </label>
+                    <textarea 
+                      value={formNotes} 
+                      onChange={e => setFormNotes(e.target.value)} 
+                      placeholder={t.notes_placeholder || "Écrivez vos notes..."} 
+                      className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold h-20 resize-none"
+                    ></textarea>
                   </div>
                 </div>
               )}

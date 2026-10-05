@@ -50,7 +50,9 @@ export const translations = {
     gender_women: "نسائي 👩",
     gender_men: "رجالي 👨",
     gender_unisex: "للجنسين 👫",
-    empty_cart_btn: "إلغاء الطلب"
+    empty_cart_btn: "إلغاء الطلب",
+    notes_label: "ملاحظات إضافية (اختياري)",
+    notes_placeholder: "اكتب ملاحظاتك أو طلباتك الخاصة هنا..."
   },
   fr: {
     home: "Accueil",
@@ -156,7 +158,9 @@ export const translations = {
     gender_women: "Women 👩",
     gender_men: "Men 👨",
     gender_unisex: "Unisex 👫",
-    empty_cart_btn: "Cancel Order"
+    empty_cart_btn: "Cancel Order",
+    notes_label: "Additional Notes (Optional)",
+    notes_placeholder: "Write your special requests here..."
   }
 };
 export type Language = 'ar' | 'fr' | 'en';
