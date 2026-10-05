@@ -43,6 +43,14 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [collapsedCartItems, setCollapsedCartItems] = useState<string[]>([]);
   
+  // Chatbot State
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string}[]>([
+    { role: 'ai', text: "Bonjour ! 👋 Je suis l'assistant de Saoudi Accessoires. Comment puis-je vous aider aujourd'hui ?" }
+  ]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatTyping, setIsChatTyping] = useState(false);
+  
   const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
@@ -255,6 +263,35 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const newCart = cart.filter(item => item.id !== id);
     setCart(newCart);
     localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
+  };
+
+  const sendChatMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!chatInput.trim() || isChatTyping) return;
+
+    const userMessage = chatInput.trim();
+    setChatInput("");
+    setChatMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    setIsChatTyping(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [...chatMessages, { role: 'user', text: userMessage }] })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.reply) {
+        setChatMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
+      } else {
+        setChatMessages(prev => [...prev, { role: 'ai', text: "Désolé, je rencontre un problème de connexion. 😔" }]);
+      }
+    } catch (error) {
+      setChatMessages(prev => [...prev, { role: 'ai', text: "Erreur de connexion. 😔" }]);
+    } finally {
+      setIsChatTyping(false);
+    }
   };
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
@@ -956,6 +993,60 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           </div>
         </div>
       )}
+
+      {/* AI CHATBOT UI */}
+      {isChatOpen && (
+        <div className="fixed bottom-24 left-6 z-50 w-80 max-w-[calc(100vw-3rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-fade-in-up">
+          <div className="bg-gold text-gray-900 p-4 flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <i className="fas fa-robot text-xl"></i>
+              <span className="font-bold">Assistant Saoudi</span>
+            </div>
+            <button onClick={() => setIsChatOpen(false)} className="text-gray-800 hover:text-black transition">
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+          <div className="flex-1 p-4 overflow-y-auto h-80 space-y-3 bg-gray-50 dark:bg-gray-900">
+            {chatMessages.map((msg, i) => (
+              <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-gray-900 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-none shadow-sm'}`}>
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {isChatTyping && (
+              <div className="flex justify-start">
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-2xl rounded-bl-none shadow-sm flex space-x-1 items-center">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                </div>
+              </div>
+            )}
+          </div>
+          <form onSubmit={sendChatMessage} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+            <input 
+              type="text" 
+              value={chatInput} 
+              onChange={e => setChatInput(e.target.value)}
+              placeholder="Posez votre question..." 
+              className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-gold"
+            />
+            <button type="submit" disabled={!chatInput.trim() || isChatTyping} className="bg-gold text-gray-900 w-9 h-9 rounded-full flex items-center justify-center hover:opacity-90 transition disabled:opacity-50">
+              <i className="fas fa-paper-plane text-sm"></i>
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* FLOATING CHAT BUTTON */}
+      <button
+        onClick={() => setIsChatOpen(!isChatOpen)}
+        className="fixed bottom-6 left-6 z-40 bg-white dark:bg-gray-800 text-gold p-4 rounded-full shadow-2xl hover:scale-110 transition-transform items-center justify-center flex border-2 border-gold"
+        title="Discuter avec l'assistant"
+      >
+        <i className={`fas ${isChatOpen ? 'fa-times' : 'fa-comment-dots'} text-xl`}></i>
+      </button>
 
       {/* FLOATING CART BUTTON */}
       <button
