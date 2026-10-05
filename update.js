@@ -1,1 +1,0 @@
-const fs = require('fs'); let c = fs.readFileSync('app/data/translations.ts', 'utf8'); c = c.replace('empty_cart_btn: \u0022Cancel Order\u0022', 'empty_cart_btn: \u0022إلغاء الطلب\u0022'); c = c.replace('empty_cart_btn: \u0022Cancel Order\u0022', 'empty_cart_btn: \u0022Annuler la commande\u0022'); fs.writeFileSync('app/data/translations.ts', c);

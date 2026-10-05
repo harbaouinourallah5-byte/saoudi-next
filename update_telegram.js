@@ -1,1 +1,0 @@
-const fs = require("fs"); let c = fs.readFileSync("app/api/order/route.ts", "utf8"); c = c.replace(/\$\{customer.rue \|\| customer.address \|\| \x27N\/A\x27\}/, "${customer.rue || customer.address || \x27N/A\x27}${customer.notes ? `\\n📝 <b>Notes:</b> ${customer.notes}` : \x27\x27}"); fs.writeFileSync("app/api/order/route.ts", c);
