@@ -64,6 +64,150 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setIsDarkMode(!isDarkMode);
   };
 
+  // Promo & Roulette State (Code raslen)
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; type: string; value: number; label: string } | null>(null);
+  const [isRouletteOpen, setIsRouletteOpen] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rouletteRotation, setRouletteRotation] = useState(0);
+  const [rouletteResultModal, setRouletteResultModal] = useState<{ won: boolean; text: string; sub: string } | null>(null);
+
+  // Order Success Modal State (in Tunisian Arabic)
+  const [orderSuccessData, setOrderSuccessData] = useState<{
+    show: boolean;
+    name: string;
+    phone: string;
+    total: string;
+    wilaya: string;
+    delegation: string;
+    rue: string;
+  } | null>(null);
+
+  // Sound generator for roulette (Web Audio API)
+  const playRouletteSound = (type: 'tick' | 'win' | 'lost') => {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      if (type === 'tick') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(650, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.04);
+      } else if (type === 'win') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
+          gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.12);
+          osc.stop(ctx.currentTime + idx * 0.12 + 0.35);
+        });
+      } else if (type === 'lost') {
+        [380, 290].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
+          gain.gain.setValueAtTime(0.1, ctx.currentTime + idx * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.15 + 0.25);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.15);
+          osc.stop(ctx.currentTime + idx * 0.15 + 0.25);
+        });
+      }
+    } catch (e) {}
+  };
+
+  // 8 Slices exact definition: 4x 10%, 1x 15%, 2x Perdu, 1x Livraison gratuite
+  const ROULETTE_SLICES = [
+    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#D4AF37", text: "#000" },
+    { label: "Perdu 😢", full: "Perdu (حظ أوفر)", type: "lost", value: 0, bg: "#374151", text: "#FFF" },
+    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#F3BA2F", text: "#000" },
+    { label: "Livraison 🚚", full: "Livraison Gratuite (0 DT)", type: "free_shipping", value: 8.5, bg: "#10B981", text: "#FFF" },
+    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#D4AF37", text: "#000" },
+    { label: "-15% 🌟", full: "15% de réduction !", type: "percent", value: 15, bg: "#8B5CF6", text: "#FFF" },
+    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#F3BA2F", text: "#000" },
+    { label: "Perdu 😢", full: "Perdu (حظ أوفر)", type: "lost", value: 0, bg: "#374151", text: "#FFF" },
+  ];
+
+  const spinRoulette = () => {
+    if (isSpinning) return;
+    setIsSpinning(true);
+    setRouletteResultModal(null);
+
+    // Pick random target slice (0 to 7)
+    const targetIndex = Math.floor(Math.random() * 8);
+    const winningSlice = ROULETTE_SLICES[targetIndex];
+
+    let ticks = 0;
+    const tickInterval = setInterval(() => {
+      playRouletteSound('tick');
+      ticks++;
+      if (ticks > 24) clearInterval(tickInterval);
+    }, 160);
+
+    const sliceAngle = 45;
+    const targetAngle = 360 - (targetIndex * sliceAngle + sliceAngle / 2);
+    const spins = 360 * (5 + Math.floor(Math.random() * 2));
+    const finalRot = rouletteRotation + spins + ((targetAngle - (rouletteRotation % 360) + 360) % 360);
+
+    setRouletteRotation(finalRot);
+
+    setTimeout(() => {
+      setIsSpinning(false);
+      clearInterval(tickInterval);
+
+      if (winningSlice.type === 'lost') {
+        playRouletteSound('lost');
+        setRouletteResultModal({
+          won: false,
+          text: "Dommage ! حظ أوفر في المرة القادمة 😢",
+          sub: "Le code saoudi_raslen a été utilisé, mais pas de chance cette fois-ci."
+        });
+      } else {
+        playRouletteSound('win');
+        const promoData = {
+          code: 'saoudi_raslen',
+          type: winningSlice.type,
+          value: winningSlice.value,
+          label: winningSlice.full
+        };
+        setAppliedPromo(promoData);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("saoudi_applied_promo", JSON.stringify(promoData));
+        }
+        setRouletteResultModal({
+          won: true,
+          text: `🎉 مبروك عليك! ربحت : ${winningSlice.full}`,
+          sub: "تم تفعيل الخصم مباشرة في سلة المشتريات متاعك !"
+        });
+      }
+    }, 4500);
+  };
+
+  const handleApplyPromo = (codeToTest?: string) => {
+    const raw = (codeToTest || promoInput).trim().toLowerCase();
+    if (!raw) return;
+    if (raw === 'saoudi_raslen') {
+      setIsRouletteOpen(true);
+      showToast("Code saoudi_raslen activé ! Tournez la roulette !", "success");
+    } else {
+      showToast("Code promo invalide.", "error");
+    }
+  };
+
   // Form State
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
@@ -124,6 +268,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const sWilaya = localStorage.getItem("saoudi_wilaya");
     const sDelegation = localStorage.getItem("saoudi_delegation");
     const sRue = localStorage.getItem("saoudi_rue");
+    const sPromo = localStorage.getItem("saoudi_applied_promo");
+    if (sPromo) {
+      try { setAppliedPromo(JSON.parse(sPromo)); } catch(e) {}
+    }
     if (sName) setFormName(sName);
     if (sPhone) setFormPhone(sPhone);
     const sEmail = localStorage.getItem("saoudi_email");
@@ -133,6 +281,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     if (sWilaya) setFormWilaya(sWilaya);
     if (sDelegation) setFormDelegation(sDelegation);
     if (sRue) setFormRue(sRue);
+    
 
     initApp();
     return () => clearTimeout(forceTimer);
@@ -324,8 +473,13 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   };
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
-  const cartShipping = cart.length > 0 ? (cart.some(item => item.product.freeShipping) ? 0 : 8.5) : 0;
-  const cartTotal = cartSubtotal + cartShipping;
+  let cartDiscount = 0;
+  if (appliedPromo?.type === 'percent') {
+    cartDiscount = (cartSubtotal * appliedPromo.value) / 100;
+  }
+  const baseShipping = cart.length > 0 ? (cart.some(item => item.product.freeShipping) ? 0 : 8.5) : 0;
+  const cartShipping = appliedPromo?.type === 'free_shipping' ? 0 : baseShipping;
+  const cartTotal = Math.max(0, cartSubtotal - cartDiscount + cartShipping);
 
   const submitCartOrder = async () => {
     if (cart.length === 0) return;
@@ -372,7 +526,16 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       });
 
       if (res.ok) {
-        showToast("Votre commande a été confirmée avec succès !", "success");
+        // Order success popup
+        setOrderSuccessData({
+          show: true,
+          name: formName,
+          phone: formPhone,
+          total: cartTotal.toFixed(1),
+          wilaya: formWilaya,
+          delegation: formDelegation,
+          rue: formRue
+        });
         // Clear cart after sending
         setCart([]);
         localStorage.removeItem("saoudi_cart");
@@ -1152,67 +1315,448 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               )}
 
               {cart.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <h3 className="font-bold text-gray-700 dark:text-gray-300 mb-3 text-sm uppercase tracking-wider">{t.shipping_info}</h3>
-                  <div className="space-y-3">
-                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder={t.fullname} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                    <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder={t.phone} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                      <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="Email (Optionnel)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                      <input type="tel" value={formWhatsapp} onChange={e => setFormWhatsapp(e.target.value)} placeholder="Numero WhatsApp (Optionnel)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                    <select value={formWilaya} onChange={e => { setFormWilaya(e.target.value); setFormDelegation(""); }} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold text-gray-900 dark:text-white">
-                      <option value="">{t.wilaya}</option>
-                      {Object.keys(tunisiaData).sort().map(w => <option key={w} value={w}>{w}</option>)}
-                    </select>
-                    <select value={formDelegation} onChange={e => setFormDelegation(e.target.value)} disabled={!formWilaya} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold disabled:opacity-50 text-gray-900 dark:text-white">
-                      <option value="">{t.delegation}</option>
-                      {formWilaya && tunisiaData[formWilaya].sort().map(d => <option key={d} value={d}>{d}</option>)}
-                    </select>
-                    <input type="text" value={formRue} onChange={e => setFormRue(e.target.value)} placeholder={t.rue} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                  {/* PROMO / ROULETTE BOX */}
+                  <div className="mb-4 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border-2 border-gold/40 rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-black uppercase text-gold flex items-center gap-1.5 tracking-wider">
+                        <i className="fas fa-gift text-sm text-yellow-500"></i> Code Spécial Raslen
+                      </span>
+                      {!appliedPromo && (
+                        <span className="text-[10px] bg-gold text-gray-950 font-bold px-2 py-0.5 rounded-full animate-pulse">
+                          Gagnez jusqu'à -15%
+                        </span>
+                      )}
+                    </div>
+                    {appliedPromo ? (
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                        <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1.5">
+                          <i className="fas fa-check-circle text-emerald-500"></i>
+                          {appliedPromo.label} activé !
+                        </span>
+                        <button 
+                          onClick={() => {
+                            setAppliedPromo(null);
+                            localStorage.removeItem("saoudi_applied_promo");
+                            showToast("Code promo retiré.", "success");
+                          }}
+                          className="text-gray-400 hover:text-red-500 text-xs font-bold transition px-2 py-1"
+                          title="Retirer le code"
+                        >
+                          ✕ Retirer
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input 
+                          type="text" 
+                          value={promoInput} 
+                          onChange={e => setPromoInput(e.target.value)}
+                          placeholder="Code promo (ex: saoudi_raslen)" 
+                          className="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs outline-none focus:border-gold text-gray-900 dark:text-white font-medium"
+                        />
+                        <button 
+                          type="button"
+                          onClick={() => handleApplyPromo()}
+                          className="bg-gold hover:bg-yellow-500 text-gray-950 text-xs font-black px-3.5 py-2 rounded-lg transition shadow flex items-center gap-1 whitespace-nowrap"
+                        >
+                          <i className="fas fa-dice text-sm"></i> Tourner
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-4">
-                    <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">
-                      {t.notes_label || "Notes additionnelles"}
-                    </label>
-                    <textarea 
-                      value={formNotes} 
-                      onChange={e => setFormNotes(e.target.value)} 
-                      placeholder={t.notes_placeholder || "Écrivez vos notes..."} 
-                      className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold h-20 resize-none"
-                    ></textarea>
+
+                  {/* ULTRA VISIBLE CHECKOUT FORM */}
+                  <div className="bg-amber-50/70 dark:bg-gray-900/90 border-2 border-gold/70 rounded-2xl p-4 shadow-lg mb-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-6 h-6 rounded-full bg-gold text-gray-950 flex items-center justify-center font-black text-xs">📝</span>
+                      <h3 className="font-black text-gray-900 dark:text-white text-base">
+                        Informations de livraison
+                      </h3>
+                    </div>
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-bold mb-4" dir="rtl">
+                      عمر معلوماتك لهنا باش تجيك السلعة لباب الدار 👇
+                    </p>
+
+                    {/* Étape 1 : Coordonnées */}
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                        <span className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1">
+                          <span className="w-4 h-4 rounded-full bg-gray-900 text-gold flex items-center justify-center text-[10px]">1</span>
+                          Coordonnées
+                        </span>
+                        <span className="text-[11px] text-gray-500 font-bold" dir="rtl">معلومات الاتصال</span>
+                      </div>
+                      <div className="space-y-2.5">
+                        <div>
+                          <label className="block text-[11px] font-black text-gray-700 dark:text-gray-300 mb-1">
+                            Nom et Prénom <span className="text-red-500 font-bold">*</span> <span className="text-gray-400 font-normal">(الاسم واللقب)</span>
+                          </label>
+                          <div className="relative">
+                            <i className="fas fa-user absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+                            <input 
+                              type="text" 
+                              required 
+                              value={formName} 
+                              onChange={e => setFormName(e.target.value)} 
+                              placeholder="Ex: Mohamed Ben Ali" 
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-gold pl-8 pr-3 py-2.5 rounded-lg text-sm outline-none text-gray-900 dark:text-white font-medium shadow-sm transition" 
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-black text-gray-700 dark:text-gray-300 mb-1">
+                            Numéro de Téléphone <span className="text-red-500 font-bold">*</span> <span className="text-gray-400 font-normal">(رقم الهاتف)</span>
+                          </label>
+                          <div className="relative">
+                            <i className="fas fa-phone-alt absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+                            <input 
+                              type="tel" 
+                              required 
+                              value={formPhone} 
+                              onChange={e => setFormPhone(e.target.value)} 
+                              placeholder="Ex: 98 123 456 / 22 345 678" 
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-gold pl-8 pr-3 py-2.5 rounded-lg text-sm outline-none text-gray-900 dark:text-white font-medium shadow-sm transition" 
+                            />
+                          </div>
+                          <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-1" dir="rtl">
+                            ⚠️ باش نكلموك في التليفون للتأكيد قبل ما نبعثو الكولي
+                          </p>
+                        </div>
+
+                        {/* Optional Contacts */}
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-1">Email (Optionnel)</label>
+                            <input 
+                              type="email" 
+                              value={formEmail} 
+                              onChange={e => setFormEmail(e.target.value)} 
+                              placeholder="votre@email.com" 
+                              className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-gold p-2 rounded-lg text-xs outline-none text-gray-900 dark:text-white shadow-sm" 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-bold text-gray-500 mb-1">WhatsApp (Optionnel)</label>
+                            <input 
+                              type="tel" 
+                              value={formWhatsapp} 
+                              onChange={e => setFormWhatsapp(e.target.value)} 
+                              placeholder="Numéro WhatsApp" 
+                              className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-gold p-2 rounded-lg text-xs outline-none text-gray-900 dark:text-white shadow-sm" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Étape 2 : Adresse de livraison */}
+                    <div className="mb-2">
+                      <div className="flex items-center justify-between mb-2 pb-1 border-b border-gray-200 dark:border-gray-700">
+                        <span className="text-xs font-black text-gray-800 dark:text-gray-200 uppercase tracking-wider flex items-center gap-1">
+                          <span className="w-4 h-4 rounded-full bg-gray-900 text-gold flex items-center justify-center text-[10px]">2</span>
+                          Adresse de livraison
+                        </span>
+                        <span className="text-[11px] text-gray-500 font-bold" dir="rtl">عنوان التوصيل</span>
+                      </div>
+                      <div className="space-y-2.5">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <label className="block text-[11px] font-black text-gray-700 dark:text-gray-300 mb-1">
+                              Gouvernorat <span className="text-red-500 font-bold">*</span> (الولاية)
+                            </label>
+                            <select 
+                              value={formWilaya} 
+                              onChange={e => { setFormWilaya(e.target.value); setFormDelegation(""); }} 
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-gold p-2.5 rounded-lg text-xs outline-none text-gray-900 dark:text-white font-bold shadow-sm"
+                            >
+                              <option value="">Sélectionnez la wilaya</option>
+                              {Object.keys(tunisiaData).sort().map(w => <option key={w} value={w}>{w}</option>)}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-black text-gray-700 dark:text-gray-300 mb-1">
+                              Délégation <span className="text-red-500 font-bold">*</span> (المعتمدية)
+                            </label>
+                            <select 
+                              value={formDelegation} 
+                              onChange={e => setFormDelegation(e.target.value)} 
+                              disabled={!formWilaya} 
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-gold p-2.5 rounded-lg text-xs outline-none text-gray-900 dark:text-white font-bold disabled:opacity-40 shadow-sm"
+                            >
+                              <option value="">{formWilaya ? "Sélectionnez délégation" : "Choisissez la wilaya d'abord"}</option>
+                              {formWilaya && tunisiaData[formWilaya].sort().map(d => <option key={d} value={d}>{d}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-black text-gray-700 dark:text-gray-300 mb-1">
+                            Adresse exacte <span className="text-red-500 font-bold">*</span> (العنوان بالتفصيل)
+                          </label>
+                          <div className="relative">
+                            <i className="fas fa-home absolute left-3 top-3.5 text-gray-400 text-xs"></i>
+                            <input 
+                              type="text" 
+                              value={formRue} 
+                              onChange={e => setFormRue(e.target.value)} 
+                              placeholder="Ex: Rue, Cité, N° maison, à côté de..." 
+                              className="w-full bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-gold pl-8 pr-3 py-2.5 rounded-lg text-xs outline-none text-gray-900 dark:text-white font-medium shadow-sm transition" 
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-bold text-gray-500 mb-1">
+                            Remarque pour le livreur (Optionnel)
+                          </label>
+                          <textarea 
+                            value={formNotes} 
+                            onChange={e => setFormNotes(e.target.value)} 
+                            placeholder="Ex: Appelez avant d'arriver..." 
+                            className="w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-gold p-2 rounded-lg text-xs outline-none text-gray-900 dark:text-white h-14 resize-none shadow-sm"
+                          ></textarea>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Reassurance Badges */}
+                    <div className="mt-3 pt-3 border-t border-amber-200/60 dark:border-gray-700/60 grid grid-cols-2 gap-2 text-[10px] font-bold text-gray-600 dark:text-gray-300">
+                      <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <i className="fas fa-truck text-emerald-500 text-xs"></i>
+                        <span>Livraison 24-48h</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-white/80 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-100 dark:border-gray-700">
+                        <i className="fas fa-money-bill-wave text-amber-500 text-xs"></i>
+                        <span>Paiement à la livraison</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             {cart.length > 0 && (
-              <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                  <span>{t.subtotal}</span>
-                  <span>{cartSubtotal.toFixed(1)} {t.currency}</span>
+              <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t-2 border-gold/40 shadow-inner">
+                <div className="space-y-1.5 mb-3 text-xs">
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>{t.subtotal}</span>
+                    <span className="font-bold">{cartSubtotal.toFixed(1)} {t.currency}</span>
+                  </div>
+                  {cartDiscount > 0 && (
+                    <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-1 rounded">
+                      <span className="flex items-center gap-1">
+                        <i className="fas fa-tag"></i> Remise ({appliedPromo?.label})
+                      </span>
+                      <span>-{cartDiscount.toFixed(1)} {t.currency}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-gray-600 dark:text-gray-400">
+                    <span>{t.shipping_cost}</span>
+                    <span className={cartShipping === 0 ? "text-emerald-500 font-bold" : ""}>
+                      {cartShipping === 0 ? "Gratuite (0 DT) 🚚" : `8.5 ${t.currency}`}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-lg font-black text-gray-900 dark:text-white pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <span>{t.total} :</span>
+                    <span className="text-gold text-xl">{cartTotal.toFixed(1)} {t.currency}</span>
+                  </div>
                 </div>
-                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mb-3">
-                  <span>{t.shipping_cost}</span>
-                  <span className={cartShipping === 0 ? "text-green-500 font-bold" : ""}>{cartShipping === 0 ? t.free : `8.5 ${t.currency}`}</span>
-                </div>
-                <div className="flex justify-between text-xl font-bold text-gray-900 dark:text-white mb-4 border-t border-gray-200 dark:border-gray-700 pt-2">
-                  <span>{t.total}</span>
-                  <span className="text-gold">{cartTotal.toFixed(1)} {t.currency}</span>
-                </div>
-                
+
                 <button 
                   onClick={submitCartOrder} 
                   disabled={isSubmittingOrder}
-                  className="w-full bg-[#D4AF37] text-white font-bold py-3 rounded-md hover:bg-[#B38728] transition shadow-md flex justify-center items-center space-x-2 uppercase tracking-wider text-sm mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full bg-gradient-to-r from-yellow-500 via-gold to-yellow-600 hover:brightness-110 active:scale-[0.99] text-gray-950 font-black py-4 px-4 rounded-xl transition-all shadow-xl flex flex-col justify-center items-center uppercase tracking-wider disabled:opacity-60 disabled:cursor-not-allowed border-2 border-yellow-300"
                 >
-                  {isSubmittingOrder ? (
-                    <i className="fas fa-spinner fa-spin text-lg"></i>
-                  ) : (
-                    <i className="fas fa-check-circle text-lg"></i>
-                  )}
-                  <span>{isSubmittingOrder ? '...' : `${t.checkout} (${cart.length})`}</span>
+                  <div className="flex items-center gap-2 text-sm sm:text-base font-black">
+                    {isSubmittingOrder ? (
+                      <i className="fas fa-spinner fa-spin text-lg"></i>
+                    ) : (
+                      <i className="fas fa-check-circle text-lg"></i>
+                    )}
+                    <span>{isSubmittingOrder ? 'Traitement de la commande...' : `CONFIRMER LA COMMANDE • ${cartTotal.toFixed(1)} DT`}</span>
+                  </div>
+                  <span className="text-[11px] font-bold text-gray-900/80 normal-case mt-0.5" dir="rtl">
+                    أكّد الطلبية (الدفع كاش عند الاستلام)
+                  </span>
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ROULETTE DE LA CHANCE MODAL */}
+      {isRouletteOpen && (
+        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md p-6 relative border-2 border-gold text-center overflow-hidden">
+            <button 
+              onClick={() => !isSpinning && setIsRouletteOpen(false)} 
+              disabled={isSpinning}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition text-xl disabled:opacity-30"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+
+            <div className="inline-block bg-gold/20 text-gold font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider mb-2">
+              🎁 Code Spécial Raslen
+            </div>
+            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase mb-1">
+              Roulette de la Chance ! 🎰
+            </h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+              Tournez la roue pour tenter de gagner jusqu'à 15% de réduction ou la livraison gratuite !
+            </p>
+
+            {/* The Wheel */}
+            <div className="relative w-72 h-72 mx-auto my-4 flex items-center justify-center">
+              {/* Top Pointer */}
+              <div className="absolute -top-3 z-30 text-red-500 text-3xl filter drop-shadow">
+                <i className="fas fa-caret-down"></i>
+              </div>
+
+              {/* Outer Ring */}
+              <div className="absolute inset-0 rounded-full border-4 border-gold shadow-2xl pointer-events-none z-20"></div>
+
+              {/* Rotating SVG Wheel */}
+              <div 
+                className="w-full h-full rounded-full overflow-hidden transition-transform ease-out"
+                style={{
+                  transform: `rotate(${rouletteRotation}deg)`,
+                  transitionDuration: isSpinning ? '4.5s' : '0s',
+                  transitionTimingFunction: 'cubic-bezier(0.15, 0.9, 0.2, 1)'
+                }}
+              >
+                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                  {ROULETTE_SLICES.map((slice, i) => {
+                    const startAngle = (i * 45 * Math.PI) / 180;
+                    const endAngle = ((i + 1) * 45 * Math.PI) / 180;
+                    const x1 = 50 + 50 * Math.cos(startAngle);
+                    const y1 = 50 + 50 * Math.sin(startAngle);
+                    const x2 = 50 + 50 * Math.cos(endAngle);
+                    const y2 = 50 + 50 * Math.sin(endAngle);
+                    const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 0 1 ${x2} ${y2} Z`;
+                    const midAngle = ((i + 0.5) * 45);
+
+                    return (
+                      <g key={i}>
+                        <path d={pathData} fill={slice.bg} stroke="#ffffff" strokeWidth="0.5" />
+                        <g transform={`rotate(${midAngle} 50 50)`}>
+                          <text
+                            x="78"
+                            y="51"
+                            fill={slice.text}
+                            fontSize="4.5"
+                            fontWeight="bold"
+                            textAnchor="middle"
+                            transform="rotate(90 78 51)"
+                          >
+                            {slice.label}
+                          </text>
+                        </g>
+                      </g>
+                    );
+                  })}
+                </svg>
+              </div>
+
+              {/* Center Hub Button */}
+              <button
+                onClick={spinRoulette}
+                disabled={isSpinning || !!appliedPromo}
+                className="absolute z-20 w-16 h-16 rounded-full bg-gray-900 border-4 border-gold text-gold font-black text-xs uppercase flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition disabled:opacity-80"
+              >
+                {isSpinning ? (
+                  <i className="fas fa-spinner fa-spin text-lg"></i>
+                ) : appliedPromo ? (
+                  "✓ FAIT"
+                ) : (
+                  "SPIN 🎰"
+                )}
+              </button>
+            </div>
+
+            {/* Spin Button below */}
+            <button
+              onClick={spinRoulette}
+              disabled={isSpinning || !!appliedPromo}
+              className="w-full mt-2 bg-gradient-to-r from-yellow-500 via-gold to-yellow-600 text-gray-950 font-black py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-98 transition uppercase tracking-wider text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isSpinning ? "La roulette tourne..." : appliedPromo ? `Code Appliqué : ${appliedPromo.label}` : "TOURNER LA ROULETTE ! 🎰"}
+            </button>
+
+            {/* Result popup if won/lost */}
+            {rouletteResultModal && (
+              <div className="mt-4 p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 animate-fade-in">
+                <p className="font-bold text-sm text-gray-900 dark:text-white mb-1">{rouletteResultModal.text}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">{rouletteResultModal.sub}</p>
+                <button 
+                  onClick={() => { setRouletteResultModal(null); setIsRouletteOpen(false); }}
+                  className="mt-2 text-xs font-bold text-gold underline hover:opacity-80"
+                >
+                  Fermer et voir mon panier
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* BLOC CONFIRMATION COMMANDE EN ARABE TUNISIEN */}
+      {orderSuccessData?.show && (
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 sm:p-8 text-center relative border-2 border-gold/50 animate-scale-up">
+            {/* Celebration Icon */}
+            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-green-100 dark:bg-green-900/40 text-green-500 flex items-center justify-center text-4xl shadow-inner border border-green-200 dark:border-green-700 animate-bounce">
+              <i className="fas fa-check-circle"></i>
+            </div>
+
+            {/* Main Title in Tunisian Arabic */}
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white mb-2" dir="rtl">
+              مبروك عليك! تم تسجيل طلبيتك بنجاح 🎉
+            </h2>
+            <p className="text-gold font-bold text-base mb-6" dir="rtl">
+              يعطيك الصحة على ثقتك في Saoudi Accessoires! 💎
+            </p>
+
+            {/* Instructions Box */}
+            <div className="bg-amber-50/70 dark:bg-gray-900/60 rounded-xl p-4 mb-6 border border-amber-200 dark:border-gray-700 text-right space-y-3" dir="rtl">
+              <div className="flex items-start space-x-3 space-x-reverse text-sm text-gray-800 dark:text-gray-200">
+                <span className="text-lg">📞</span>
+                <p><strong>باش نكلموك بالتليفون :</strong> في أقرب وقت لتأكيد الطلبية وتفاصيل التوصيل.</p>
+              </div>
+              <div className="flex items-start space-x-3 space-x-reverse text-sm text-gray-800 dark:text-gray-200">
+                <span className="text-lg">🚚</span>
+                <p><strong>التوصيل لباب دارك :</strong> في ظرف 24 إلى 48 ساعة أينما كنت في تونس.</p>
+              </div>
+              <div className="flex items-start space-x-3 space-x-reverse text-sm text-gray-800 dark:text-gray-200">
+                <span className="text-lg">💵</span>
+                <p><strong>الدفع عند الاستلام :</strong> تخلّص كاش بعد ما تتفقّد سلعتك وتتأكّد منها.</p>
+              </div>
+            </div>
+
+            {/* Order Summary details */}
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 text-xs text-gray-600 dark:text-gray-300 mb-6 flex justify-between items-center border border-gray-200 dark:border-gray-600">
+              <div className="text-left">
+                <p><strong>Client:</strong> {orderSuccessData.name}</p>
+                <p><strong>Tél:</strong> {orderSuccessData.phone}</p>
+                <p><strong>Ville:</strong> {orderSuccessData.delegation}, {orderSuccessData.wilaya}</p>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-500 dark:text-gray-400 block">Total à payer:</span>
+                <span className="text-xl font-bold text-gold">{orderSuccessData.total} DT</span>
+              </div>
+            </div>
+
+            {/* Continue shopping button */}
+            <button
+              onClick={() => setOrderSuccessData(null)}
+              className="w-full bg-gradient-to-r from-yellow-500 via-gold to-yellow-600 hover:brightness-110 active:scale-[0.99] text-gray-950 font-black py-4 px-6 rounded-xl transition shadow-xl text-base uppercase tracking-wider flex items-center justify-center space-x-2"
+            >
+              <i className="fas fa-shopping-bag"></i>
+              <span>واصل التسوّق / Continuer mes achats</span>
+            </button>
           </div>
         </div>
       )}
