@@ -59,6 +59,7 @@ export async function POST(request: Request) {
                         <h3 style="border-bottom: 2px solid #D4AF37; padding-bottom: 5px; color: #D4AF37;">Informations Client</h3>
                         <p><strong>Nom:</strong> ${customer.name}</p>
                         <p><strong>Téléphone:</strong> <a href="tel:${customer.phone}" style="color: #333; text-decoration: none;">${customer.phone}</a></p>
+                        <p><strong>Email:</strong> ${customer.email || 'N/A'}</p>
                         <p><strong>Wilaya:</strong> ${customer.wilaya || 'N/A'}</p>
                         <p><strong>Délégation:</strong> ${customer.delegation || 'N/A'}</p>
                         <p><strong>Rue / Détails:</strong> ${customer.rue || customer.address}</p>
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
                 `- ${item.qty}x ${item.title} (${item.price} DT)\n  Couleur: ${item.color || 'N/A'} | Box: ${item.box}`
             ).join('\n');
 
-            const telegramMessage = `🛍️ <b>NOUVELLE COMMANDE !</b>\n\n👤 <b>Client:</b> ${customer.name}\n📞 <b>Tél:</b> ${customer.phone}\n📍 <b>Adresse:</b> ${customer.wilaya}, ${customer.delegation}\n🏠 <b>Rue:</b> ${customer.rue || customer.address || 'N/A'}${customer.notes ? `\n📝 <b>Notes:</b> ${customer.notes}` : ''}\n\n🛒 <b>Panier:</b>\n${cartText}\n\n🚚 <b>Livraison:</b> 8.5 DT\n💰 <b>TOTAL: ${total} DT</b>`;
+            const telegramMessage = `🛍️ <b>NOUVELLE COMMANDE !</b>\n\n👤 <b>Client:</b> ${customer.name}\n📞 <b>Tél:</b> ${customer.phone}\n?? <b>Email:</b> ${customer.email || 'N/A'}\n📍 <b>Adresse:</b> ${customer.wilaya}, ${customer.delegation}\n🏠 <b>Rue:</b> ${customer.rue || customer.address || 'N/A'}${customer.notes ? `\n📝 <b>Notes:</b> ${customer.notes}` : ''}\n\n🛒 <b>Panier:</b>\n${cartText}\n\n🚚 <b>Livraison:</b> 8.5 DT\n💰 <b>TOTAL: ${total} DT</b>`;
 
             await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
                 method: 'POST',
@@ -137,3 +138,6 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: false, error: "Erreur serveur." }, { status: 500 });
     }
 }
+
+
+
