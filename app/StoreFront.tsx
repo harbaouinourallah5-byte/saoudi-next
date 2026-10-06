@@ -69,6 +69,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; type: string; value: number; label: string } | null>(null);
   const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [hasAlreadySpun, setHasAlreadySpun] = useState(false);
   const [rouletteRotation, setRouletteRotation] = useState(0);
   const [rouletteResultModal, setRouletteResultModal] = useState<{ won: boolean; text: string; sub: string } | null>(null);
 
@@ -169,6 +170,11 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
       setIsSpinning(false);
       clearInterval(tickInterval);
 
+      if (typeof window !== "undefined") {
+        localStorage.setItem("saoudi_raslen_already_spun", "true");
+      }
+      setHasAlreadySpun(true);
+
       if (winningSlice.type === 'lost') {
         playRouletteSound('lost');
         setRouletteResultModal({
@@ -268,6 +274,9 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const sWilaya = localStorage.getItem("saoudi_wilaya");
     const sDelegation = localStorage.getItem("saoudi_delegation");
     const sRue = localStorage.getItem("saoudi_rue");
+    if (localStorage.getItem("saoudi_raslen_already_spun") === "true") {
+      setHasAlreadySpun(true);
+    }
     const sPromo = localStorage.getItem("saoudi_applied_promo");
     if (sPromo) {
       try { setAppliedPromo(JSON.parse(sPromo)); } catch(e) {}
@@ -1329,22 +1338,18 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                       )}
                     </div>
                     {appliedPromo ? (
-                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 rounded-lg p-2.5 flex items-center justify-between text-xs">
+                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-700 rounded-lg p-2.5 flex items-center justify-between text-xs">
                         <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1.5">
                           <i className="fas fa-check-circle text-emerald-500"></i>
-                          {appliedPromo.label} activé !
+                          {appliedPromo.label} appliqué !
                         </span>
-                        <button 
-                          onClick={() => {
-                            setAppliedPromo(null);
-                            localStorage.removeItem("saoudi_applied_promo");
-                            showToast("Code promo retiré.", "success");
-                          }}
-                          className="text-gray-400 hover:text-red-500 text-xs font-bold transition px-2 py-1"
-                          title="Retirer le code"
-                        >
-                          ✕ Retirer
-                        </button>
+                        <span className="text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 font-bold px-2 py-0.5 rounded">
+                          Verrouillé 🔒
+                        </span>
+                      </div>
+                    ) : hasAlreadySpun ? (
+                      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-2.5 text-center text-xs text-gray-500 dark:text-gray-400 font-bold">
+                        Code saoudi_raslen déjà utilisé (1 seule chance par client) 🔒
                       </div>
                     ) : (
                       <div className="flex gap-2">
@@ -1664,7 +1669,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
               {/* Center Hub Button */}
               <button
                 onClick={spinRoulette}
-                disabled={isSpinning || !!appliedPromo}
+                disabled={isSpinning || !!appliedPromo || hasAlreadySpun}
                 className="absolute z-20 w-16 h-16 rounded-full bg-gray-900 border-4 border-gold text-gold font-black text-xs uppercase flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition disabled:opacity-80"
               >
                 {isSpinning ? (
@@ -1680,7 +1685,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             {/* Spin Button below */}
             <button
               onClick={spinRoulette}
-              disabled={isSpinning || !!appliedPromo}
+              disabled={isSpinning || !!appliedPromo || hasAlreadySpun}
               className="w-full mt-2 bg-gradient-to-r from-yellow-500 via-gold to-yellow-600 text-gray-950 font-black py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-98 transition uppercase tracking-wider text-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSpinning ? "La roulette tourne..." : appliedPromo ? `Code Appliqué : ${appliedPromo.label}` : "TOURNER LA ROULETTE ! 🎰"}
