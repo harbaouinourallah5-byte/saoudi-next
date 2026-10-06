@@ -68,6 +68,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [formName, setFormName] = useState("");
   const [formPhone, setFormPhone] = useState("");
   const [formEmail, setFormEmail] = useState("");
+  const [formWhatsapp, setFormWhatsapp] = useState("");
   const [formWilaya, setFormWilaya] = useState("");
   const [formDelegation, setFormDelegation] = useState("");
   const [formRue, setFormRue] = useState("");
@@ -127,6 +128,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     if (sPhone) setFormPhone(sPhone);
     const sEmail = localStorage.getItem("saoudi_email");
     if (sEmail) setFormEmail(sEmail);
+    const sWhatsapp = localStorage.getItem("saoudi_whatsapp");
+    if (sWhatsapp) setFormWhatsapp(sWhatsapp);
     if (sWilaya) setFormWilaya(sWilaya);
     if (sDelegation) setFormDelegation(sDelegation);
     if (sRue) setFormRue(sRue);
@@ -326,7 +329,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
   const submitCartOrder = async () => {
     if (cart.length === 0) return;
-    if (!formName || !formPhone || !formEmail || !formWilaya || !formDelegation) {
+    if (!formName || !formPhone || !formWilaya || !formDelegation) {
       showToast("S'il vous plaît, remplissez vos informations de livraison.", "error");
       return;
     }
@@ -354,7 +357,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           customer: { 
             name: formName, 
             phone: formPhone,
-              email: formEmail, 
+              email: formEmail,
+              whatsapp: formWhatsapp, 
             address: combinedAddress,
             wilaya: formWilaya,
             delegation: formDelegation,
@@ -377,6 +381,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         localStorage.setItem("saoudi_name", formName);
         localStorage.setItem("saoudi_phone", formPhone);
         localStorage.setItem("saoudi_email", formEmail);
+        localStorage.setItem("saoudi_whatsapp", formWhatsapp);
         localStorage.setItem("saoudi_wilaya", formWilaya);
         localStorage.setItem("saoudi_delegation", formDelegation);
         localStorage.setItem("saoudi_rue", formRue);
@@ -1152,7 +1157,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
                   <div className="space-y-3">
                     <input type="text" value={formName} onChange={e => setFormName(e.target.value)} placeholder={t.fullname} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                     <input type="tel" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder={t.phone} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
-                      <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="Email (Obligatoire)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" required />
+                      <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="Email (Optionnel)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
+                      <input type="tel" value={formWhatsapp} onChange={e => setFormWhatsapp(e.target.value)} placeholder="Numéro WhatsApp (Optionnel)" className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold" />
                     <select value={formWilaya} onChange={e => { setFormWilaya(e.target.value); setFormDelegation(""); }} className="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 p-3 rounded-md text-sm outline-none focus:border-gold text-gray-900 dark:text-white">
                       <option value="">{t.wilaya}</option>
                       {Object.keys(tunisiaData).sort().map(w => <option key={w} value={w}>{w}</option>)}
