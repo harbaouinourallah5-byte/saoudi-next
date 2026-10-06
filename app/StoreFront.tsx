@@ -714,7 +714,6 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           <a href="#" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-home w-6 text-gold"></i> {t.home}</a>
           <a href="#boutique" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-gem w-6 text-gold"></i> {t.boutique}</a>
           <a href="#contact" onClick={() => setIsSidebarOpen(false)} className="text-gray-800 dark:text-white hover:text-gold uppercase tracking-wider text-sm flex items-center"><i className="fas fa-phone w-6 text-gold"></i> {t.contact}</a>
-          <a href="/admin" className="text-yellow-600 hover:text-yellow-700 uppercase tracking-wider text-sm flex items-center font-bold"><i className="fas fa-lock w-6"></i> {t.admin}</a>
         </nav>
         <div className="mt-auto p-4 border-t border-gray-100 dark:border-gray-700">
           <a href="https://wa.me/21655211908" target="_blank" rel="noreferrer" className="w-full bg-[#25D366] text-white px-4 py-2 rounded-full flex items-center justify-center space-x-2">
@@ -750,7 +749,6 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
             <a href="#" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.home}</a>
             <a href="#boutique" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.boutique}</a>
             <a href="#contact" className="text-gray-800 dark:text-gray-200 hover-gold transition uppercase text-sm tracking-wider font-semibold">{t.contact}</a>
-            <a href="/admin" className="text-yellow-600 hover:text-yellow-700 transition uppercase text-sm tracking-wider font-bold"><i className="fas fa-lock"></i> {t.admin}</a>
           </div>
 
           <div className="flex items-center gap-4">
