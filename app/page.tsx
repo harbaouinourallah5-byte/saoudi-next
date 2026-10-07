@@ -4,8 +4,8 @@ import clientPromise from '@/lib/mongodb';
 export const revalidate = 3600; // 1 heure (pour ne pas exploser les limites Vercel gratuites)
 
 export default async function Page() {
-    let safeProducts = [];
-    let safeBoxes = [];
+    let safeProducts: any[] = [];
+    let safeBoxes: any[] = [];
 
     try {
         const client = await clientPromise;

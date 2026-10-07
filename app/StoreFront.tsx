@@ -43,13 +43,43 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [collapsedCartItems, setCollapsedCartItems] = useState<string[]>([]);
   
-  // Chatbot State
+  // Chatbot State & Types
+  interface ChatProductCard {
+    _id: string;
+    title: string;
+    price: number;
+    img: string;
+    inStock?: boolean;
+    category?: string;
+    gender?: string;
+  }
+
+  interface ChatMessageItem {
+    role: 'user' | 'ai';
+    text: string;
+    products?: ChatProductCard[];
+    time?: string;
+  }
+
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string}[]>([
-    { role: 'ai', text: "Bonjour ! 👋 Je suis l'assistant de Saoudi Accessoires. Comment puis-je vous aider aujourd'hui ?" }
+  const [chatMessages, setChatMessages] = useState<ChatMessageItem[]>([
+    { 
+      role: 'ai', 
+      text: "عسلامة وبك مرحبا في Saoudi Accessoires ! 👋✨\nكيفاش نجم نعاونك اليوم ؟ تلوج على منقالة رجالي، كولية، ولا كادو مزيان ؟ 😊",
+      time: "À l'instant"
+    }
   ]);
   const [chatInput, setChatInput] = useState("");
   const [isChatTyping, setIsChatTyping] = useState(false);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isChatOpen) {
+      setTimeout(() => {
+        chatScrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    }
+  }, [chatMessages, isChatTyping, isChatOpen]);
   
   const [isDarkMode, setIsDarkMode] = useState(true);
 
@@ -452,33 +482,82 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     localStorage.setItem("saoudi_cart", JSON.stringify(newCart));
   };
 
-  const sendChatMessage = async (e?: React.FormEvent) => {
+  const sendChatMessage = async (e?: React.FormEvent, directMessage?: string) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim() || isChatTyping) return;
+    const textToSend = (directMessage || chatInput).trim();
+    if (!textToSend || isChatTyping) return;
 
-    const userMessage = chatInput.trim();
     setChatInput("");
-    setChatMessages(prev => [...prev, { role: 'user', text: userMessage }]);
+    const userMsg: ChatMessageItem = {
+      role: 'user',
+      text: textToSend,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    const newHistory = [...chatMessages, userMsg];
+    setChatMessages(newHistory);
     setIsChatTyping(true);
 
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: [...chatMessages, { role: 'user', text: userMessage }] })
+        body: JSON.stringify({ 
+          messages: newHistory.map(m => ({ role: m.role, text: m.text })),
+          clientProducts: products.map(p => ({
+            _id: p._id,
+            title: p.title,
+            price: p.price,
+            img: p.img || (p.colors && p.colors[0] && (p.colors[0].image || p.colors[0].img)) || '',
+            inStock: p.inStock !== false,
+            category: p.category,
+            gender: p.gender
+          }))
+        })
       });
       const data = await res.json();
       
-      if (res.ok && data.reply) {
-        setChatMessages(prev => [...prev, { role: 'ai', text: data.reply }]);
+      if (data && data.reply) {
+        setChatMessages(prev => [
+          ...prev, 
+          { 
+            role: 'ai', 
+            text: data.reply,
+            products: data.products || [],
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
       } else {
-        setChatMessages(prev => [...prev, { role: 'ai', text: `Désolé, problème: ${data.error || 'inconnu'} ${data.details ? JSON.stringify(data.details) : ''}` }]);
+        setChatMessages(prev => [
+          ...prev, 
+          { 
+            role: 'ai', 
+            text: "عسلامة! فريقنا حاضر لمعاونتك، تنجم تتواصل معنا مباشرة على الواتساب 55211908 216+ 💬",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
       }
     } catch (error: any) {
-      setChatMessages(prev => [...prev, { role: 'ai', text: `Erreur fatale: ${error.message}` }]);
+      setChatMessages(prev => [
+        ...prev, 
+        { 
+          role: 'ai', 
+          text: "عسلامة! تنجم تتواصل معنا مباشرة على الواتساب 55211908 216+ 💬 أو تواصل تصفّح منتوجاتنا !",
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
     } finally {
       setIsChatTyping(false);
     }
+  };
+
+  const clearChat = () => {
+    setChatMessages([
+      { 
+        role: 'ai', 
+        text: "عسلامة وبك مرحبا في Saoudi Accessoires ! 👋✨\nكيفاش نجم نعاونك اليوم ؟ 😊",
+        time: "À l'instant"
+      }
+    ]);
   };
 
   const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * (item.qty || 1)), 0);
@@ -1199,45 +1278,200 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
       {/* AI CHATBOT UI */}
       {isChatOpen && (
-        <div dir="ltr" className="fixed bottom-24 left-6 z-50 w-80 max-w-[calc(100vw-3rem)] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-fade-in-up">
-          <div className="bg-gold text-gray-900 p-4 flex justify-between items-center">
-            <div className="flex items-center space-x-2">
-              <i className="fas fa-robot text-xl"></i>
-              <span className="font-bold">Assistant Saoudi</span>
+        <div dir="ltr" className="fixed bottom-24 left-4 sm:left-6 z-50 w-[350px] sm:w-[380px] max-w-[calc(100vw-2rem)] h-[520px] max-h-[82vh] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden animate-fade-in-up">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-yellow-600 via-amber-500 to-yellow-600 text-gray-950 p-3 sm:p-3.5 flex justify-between items-center shadow-md">
+            <div className="flex items-center space-x-2.5">
+              <div className="w-9 h-9 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-gray-950 shadow-inner">
+                <i className="fas fa-robot text-base"></i>
+              </div>
+              <div>
+                <h3 className="font-extrabold text-sm leading-tight tracking-wide">Assistant Saoudi ✨</h3>
+                <div className="flex items-center space-x-1.5 text-[11px] text-gray-900 font-medium">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  <span>{lang === 'ar' ? 'متصل الآن' : 'En ligne'}</span>
+                </div>
+              </div>
             </div>
-            <button onClick={() => setIsChatOpen(false)} className="text-gray-800 hover:text-black transition">
-              <i className="fas fa-times"></i>
-            </button>
+            <div className="flex items-center space-x-1">
+              <a 
+                href="https://wa.me/21655211908" 
+                target="_blank" 
+                rel="noreferrer" 
+                title="WhatsApp direct"
+                className="w-7 h-7 rounded-full bg-white/25 hover:bg-white/40 flex items-center justify-center text-gray-950 transition"
+              >
+                <i className="fab fa-whatsapp text-xs font-bold"></i>
+              </a>
+              <button 
+                onClick={clearChat} 
+                title="Nouvelle discussion"
+                className="w-7 h-7 rounded-full bg-white/25 hover:bg-white/40 flex items-center justify-center text-gray-950 transition"
+              >
+                <i className="fas fa-sync-alt text-xs"></i>
+              </button>
+              <button 
+                onClick={() => setIsChatOpen(false)} 
+                title="Fermer"
+                className="w-7 h-7 rounded-full bg-white/25 hover:bg-white/40 flex items-center justify-center text-gray-950 transition"
+              >
+                <i className="fas fa-times text-xs"></i>
+              </button>
+            </div>
           </div>
-          <div className="flex-1 p-4 overflow-y-auto h-80 space-y-3 bg-gray-50 dark:bg-gray-900">
+
+          {/* Messages Area */}
+          <div className="flex-1 p-3.5 overflow-y-auto space-y-3.5 bg-[#FAF8F5] dark:bg-gray-900">
             {chatMessages.map((msg, i) => (
               <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                <div dir="auto" className={`max-w-[85%] p-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-gray-900 text-white rounded-br-none' : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-700 rounded-bl-none shadow-sm'}`}>
-                  {msg.text}
+                {msg.role === 'ai' && (
+                  <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs flex-shrink-0 mr-2 mt-1 shadow-2xs border border-amber-300 dark:border-amber-700">
+                    <i className="fas fa-robot"></i>
+                  </div>
+                )}
+                <div className={`max-w-[85%] ${msg.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+                  <div 
+                    dir="auto" 
+                    className={`p-3 rounded-2xl text-sm whitespace-pre-line leading-relaxed ${
+                      msg.role === 'user' 
+                        ? 'bg-gray-900 dark:bg-amber-500 text-white dark:text-gray-950 rounded-br-xs shadow-sm font-medium' 
+                        : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 border border-gray-200/80 dark:border-gray-700 rounded-bl-xs shadow-sm'
+                    }`}
+                  >
+                    {msg.text}
+
+                    {/* PRODUCT CARDS ATTACHED TO MESSAGE */}
+                    {msg.products && msg.products.length > 0 && (
+                      <div className="mt-3 pt-2.5 border-t border-gray-100 dark:border-gray-700/80 space-y-2">
+                        <div className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <i className="fas fa-sparkles text-[10px]"></i>
+                          <span>{lang === 'ar' ? 'المنتوجات المقترحة :' : 'Produits suggérés :'}</span>
+                        </div>
+                        <div className="space-y-2">
+                          {msg.products.map((prod, pIdx) => {
+                            const fullProd = products.find(
+                              (p: any) => p._id === prod._id || (p.title && prod.title && p.title.toLowerCase().trim() === prod.title.toLowerCase().trim())
+                            ) || prod;
+                            const displayImg = prod.img || fullProd.img || (fullProd.colors && fullProd.colors[0]?.image) || '';
+                            const isOutOfStock = prod.inStock === false || fullProd.inStock === false;
+
+                            return (
+                              <div
+                                key={pIdx}
+                                className="bg-gray-50/90 dark:bg-gray-700/60 hover:bg-white dark:hover:bg-gray-700 rounded-xl p-2 border border-gray-200 dark:border-gray-600 hover:border-amber-400 dark:hover:border-amber-400 transition-all shadow-2xs flex items-center gap-2.5 group text-left"
+                              >
+                                {/* Product Thumbnail */}
+                                <div
+                                  onClick={() => fullProd && openModal(fullProd)}
+                                  className="relative w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden cursor-pointer bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600"
+                                >
+                                  {displayImg ? (
+                                    <img
+                                      src={displayImg}
+                                      alt={prod.title}
+                                      className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                      <i className="fas fa-gem text-amber-500"></i>
+                                    </div>
+                                  )}
+                                  {isOutOfStock && (
+                                    <span className="absolute inset-0 bg-red-600/80 text-white text-[8px] font-bold flex items-center justify-center text-center">
+                                      Épuisé
+                                    </span>
+                                  )}
+                                </div>
+
+                                {/* Product Info */}
+                                <div className="flex-1 min-w-0">
+                                  <h4
+                                    onClick={() => fullProd && openModal(fullProd)}
+                                    className="text-xs font-bold text-gray-900 dark:text-white truncate cursor-pointer hover:text-amber-500 transition"
+                                    title={prod.title}
+                                  >
+                                    {prod.title}
+                                  </h4>
+                                  <div className="text-amber-600 dark:text-amber-400 font-extrabold text-xs mt-0.5">
+                                    {prod.price} DT
+                                  </div>
+
+                                  {/* Action Button */}
+                                  <div className="flex items-center gap-1.5 mt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => fullProd && openModal(fullProd)}
+                                      className="text-[10px] bg-gray-900 hover:bg-amber-500 dark:bg-amber-400 dark:hover:bg-amber-300 text-white dark:text-gray-950 font-bold px-2.5 py-0.5 rounded-full transition flex items-center gap-1 shadow-2xs"
+                                    >
+                                      <i className="fas fa-eye text-[9px]"></i>
+                                      <span>{lang === 'ar' ? 'عرض التفاصيل' : 'Voir le produit'}</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  {msg.time && (
+                    <span className="text-[10px] text-gray-400 mt-1 px-1">{msg.time}</span>
+                  )}
                 </div>
               </div>
             ))}
+
             {isChatTyping && (
-              <div className="flex justify-start">
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-2xl rounded-bl-none shadow-sm flex space-x-1 items-center">
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              <div className="flex justify-start items-center">
+                <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs flex-shrink-0 mr-2 shadow-2xs">
+                  <i className="fas fa-robot"></i>
+                </div>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3.5 py-2.5 rounded-2xl rounded-bl-xs shadow-sm flex space-x-1.5 items-center">
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0.15s'}}></div>
+                  <div className="w-2 h-2 bg-amber-500 rounded-full animate-bounce" style={{animationDelay: '0.3s'}}></div>
                 </div>
               </div>
             )}
+            <div ref={chatScrollRef} />
           </div>
-          <form onSubmit={sendChatMessage} className="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+
+          {/* Quick Suggestion Chips */}
+          <div className="px-3 pt-2 pb-1.5 bg-white dark:bg-gray-800 border-t border-gray-200/70 dark:border-gray-700 flex gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
+            {[
+              { label: "⌚ Montres homme", query: "وريني السوايع الرجالي الموجودة" },
+              { label: "💎 Colliers & Packs", query: "وريني الكوليات والباكات المقترحة" },
+              { label: "🎁 Idée Cadeau", query: "نحب فكرة كادو مزيانة" },
+              { label: "🚚 Livraison", query: "بقداش التوصيل وقداش يقعد؟" },
+            ].map((chip, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => sendChatMessage(undefined, chip.query)}
+                className="flex-shrink-0 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600 rounded-full px-2.5 py-1 font-medium hover:border-amber-400 hover:text-amber-500 dark:hover:text-amber-400 transition shadow-2xs whitespace-nowrap"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Chat Input Form */}
+          <form onSubmit={sendChatMessage} className="p-2.5 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 flex items-center space-x-2">
             <input 
               type="text" 
               dir="auto"
               value={chatInput} 
               onChange={e => setChatInput(e.target.value)}
-              placeholder="Posez votre question..." 
-              className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full px-4 py-2 text-sm outline-none focus:ring-1 focus:ring-gold"
+              placeholder={lang === 'ar' ? 'اسألني أي سؤال...' : 'Posez votre question...'} 
+              className="flex-1 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-full px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-amber-500/50"
             />
-            <button type="submit" disabled={!chatInput.trim() || isChatTyping} className="bg-gold text-gray-900 w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center hover:opacity-90 transition disabled:opacity-50">
-              <i className="fas fa-paper-plane text-sm"></i>
+            <button 
+              type="submit" 
+              disabled={!chatInput.trim() || isChatTyping} 
+              className="bg-amber-500 hover:bg-amber-600 text-gray-950 w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition disabled:opacity-40 disabled:hover:bg-amber-500 shadow-sm"
+            >
+              <i className="fas fa-paper-plane text-xs"></i>
             </button>
           </form>
         </div>
