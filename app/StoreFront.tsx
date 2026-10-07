@@ -1440,10 +1440,10 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
           {/* Quick Suggestion Chips */}
           <div className="px-3 pt-2 pb-1.5 bg-white dark:bg-gray-800 border-t border-gray-200/70 dark:border-gray-700 flex gap-1.5 overflow-x-auto scrollbar-none text-[11px]">
             {[
-              { label: "⌚ Montres homme", query: "وريني السوايع الرجالي الموجودة" },
-              { label: "💎 Colliers & Packs", query: "وريني الكوليات والباكات المقترحة" },
-              { label: "🎁 Idée Cadeau", query: "نحب فكرة كادو مزيانة" },
-              { label: "🚚 Livraison", query: "بقداش التوصيل وقداش يقعد؟" },
+              { label: lang === 'ar' ? "⌚ سوايع رجالي" : "⌚ Montres homme", query: lang === 'ar' ? "وريني السوايع الرجالي الموجودة" : "werini montres lil rjel" },
+              { label: lang === 'ar' ? "💎 كوليات وباكات" : "💎 Colliers & Packs", query: lang === 'ar' ? "وريني الكوليات والباكات المقترحة" : "werini des colliers w packs mezyenin" },
+              { label: lang === 'ar' ? "🎁 فكرة كادو" : "🎁 Idée Cadeau", query: lang === 'ar' ? "نحب فكرة كادو مزيانة برشا" : "n7eb fekret kado to7fa" },
+              { label: lang === 'ar' ? "🚚 التوصيل والخلاص" : "🚚 Livraison & Prix", query: lang === 'ar' ? "بقداش التوصيل وكيفاش الخلاص؟" : "b9adeh el livraison w kifech el 5las?" },
             ].map((chip, idx) => (
               <button
                 key={idx}
