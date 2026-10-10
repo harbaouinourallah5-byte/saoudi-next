@@ -1,7 +1,7 @@
 import StoreFront from './StoreFront';
 import clientPromise from '@/lib/mongodb';
 
-export const revalidate = 3600; // 1 heure (pour ne pas exploser les limites Vercel gratuites)
+export const dynamic = 'force-dynamic';
 
 export default async function Page() {
     let safeProducts: any[] = [];

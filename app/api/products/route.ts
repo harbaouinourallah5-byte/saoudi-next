@@ -3,7 +3,7 @@ import clientPromise from '@/lib/mongodb';
 import { SECRET_TOKEN } from '../login/route';
 import { uploadToCloudinary } from '@/lib/cloudinary';
 
-export const revalidate = 10;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
@@ -11,7 +11,11 @@ export async function GET() {
         const db = client.db('saoudi_store');
         
         const products = await db.collection('products').find({}).sort({ position: 1, _id: -1 }).toArray();
-        return NextResponse.json(products);
+        return NextResponse.json(products, {
+            headers: {
+                'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+            }
+        });
     } catch (e: any) {
         return NextResponse.json({ error: e.message }, { status: 500 });
     }
