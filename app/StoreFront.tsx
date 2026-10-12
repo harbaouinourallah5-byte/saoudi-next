@@ -94,14 +94,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     setIsDarkMode(!isDarkMode);
   };
 
-  // Promo & Roulette State (Code raslen)
-  const [promoInput, setPromoInput] = useState("");
+  // Promo State
   const [appliedPromo, setAppliedPromo] = useState<{ code: string; type: string; value: number; label: string } | null>(null);
-  const [isRouletteOpen, setIsRouletteOpen] = useState(false);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [hasAlreadySpun, setHasAlreadySpun] = useState(false);
-  const [rouletteRotation, setRouletteRotation] = useState(0);
-  const [rouletteResultModal, setRouletteResultModal] = useState<{ won: boolean; text: string; sub: string } | null>(null);
 
   // Order Success Modal State (in Tunisian Arabic)
   const [orderSuccessData, setOrderSuccessData] = useState<{
@@ -113,136 +107,6 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     delegation: string;
     rue: string;
   } | null>(null);
-
-  // Sound generator for roulette (Web Audio API)
-  const playRouletteSound = (type: 'tick' | 'win' | 'lost') => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      if (type === 'tick') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(650, ctx.currentTime);
-        gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.04);
-      } else if (type === 'win') {
-        [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.12);
-          gain.gain.setValueAtTime(0.18, ctx.currentTime + idx * 0.12);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.12 + 0.35);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + idx * 0.12);
-          osc.stop(ctx.currentTime + idx * 0.12 + 0.35);
-        });
-      } else if (type === 'lost') {
-        [380, 290].forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
-          gain.gain.setValueAtTime(0.1, ctx.currentTime + idx * 0.15);
-          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.15 + 0.25);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + idx * 0.15);
-          osc.stop(ctx.currentTime + idx * 0.15 + 0.25);
-        });
-      }
-    } catch (e) {}
-  };
-
-  // 8 Slices exact definition: 4x 10%, 1x 15%, 2x Perdu, 1x Livraison gratuite
-  const ROULETTE_SLICES = [
-    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#D4AF37", text: "#000" },
-    { label: "Perdu 😢", full: "Perdu (حظ أوفر)", type: "lost", value: 0, bg: "#374151", text: "#FFF" },
-    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#F3BA2F", text: "#000" },
-    { label: "Livraison 🚚", full: "Livraison Gratuite (0 DT)", type: "free_shipping", value: 8.5, bg: "#10B981", text: "#FFF" },
-    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#D4AF37", text: "#000" },
-    { label: "-15% 🌟", full: "15% de réduction !", type: "percent", value: 15, bg: "#8B5CF6", text: "#FFF" },
-    { label: "-10%", full: "10% de réduction", type: "percent", value: 10, bg: "#F3BA2F", text: "#000" },
-    { label: "Perdu 😢", full: "Perdu (حظ أوفر)", type: "lost", value: 0, bg: "#374151", text: "#FFF" },
-  ];
-
-  const spinRoulette = () => {
-    if (isSpinning) return;
-    setIsSpinning(true);
-    setRouletteResultModal(null);
-
-    // Pick random target slice (0 to 7)
-    const targetIndex = Math.floor(Math.random() * 8);
-    const winningSlice = ROULETTE_SLICES[targetIndex];
-
-    let ticks = 0;
-    const tickInterval = setInterval(() => {
-      playRouletteSound('tick');
-      ticks++;
-      if (ticks > 24) clearInterval(tickInterval);
-    }, 160);
-
-    const sliceAngle = 45;
-    const targetAngle = 360 - (targetIndex * sliceAngle + sliceAngle / 2);
-    const spins = 360 * (5 + Math.floor(Math.random() * 2));
-    const finalRot = rouletteRotation + spins + ((targetAngle - (rouletteRotation % 360) + 360) % 360);
-
-    setRouletteRotation(finalRot);
-
-    setTimeout(() => {
-      setIsSpinning(false);
-      clearInterval(tickInterval);
-
-      if (typeof window !== "undefined") {
-        localStorage.setItem("saoudi_raslen_already_spun", "true");
-      }
-      setHasAlreadySpun(true);
-
-      if (winningSlice.type === 'lost') {
-        playRouletteSound('lost');
-        setRouletteResultModal({
-          won: false,
-          text: "Dommage ! حظ أوفر في المرة القادمة 😢",
-          sub: "Le code saoudi_raslen a été utilisé, mais pas de chance cette fois-ci."
-        });
-      } else {
-        playRouletteSound('win');
-        const promoData = {
-          code: 'saoudi_raslen',
-          type: winningSlice.type,
-          value: winningSlice.value,
-          label: winningSlice.full
-        };
-        setAppliedPromo(promoData);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("saoudi_applied_promo", JSON.stringify(promoData));
-        }
-        setRouletteResultModal({
-          won: true,
-          text: `🎉 مبروك عليك! ربحت : ${winningSlice.full}`,
-          sub: "تم تفعيل الخصم مباشرة في سلة المشتريات متاعك !"
-        });
-      }
-    }, 4500);
-  };
-
-  const handleApplyPromo = (codeToTest?: string) => {
-    const raw = (codeToTest || promoInput).trim().toLowerCase();
-    if (!raw) return;
-    if (raw === 'saoudi_raslen') {
-      setIsRouletteOpen(true);
-      showToast("Code saoudi_raslen activé ! Tournez la roulette !", "success");
-    } else {
-      showToast("Code promo invalide.", "error");
-    }
-  };
 
   // Form State
   const [formName, setFormName] = useState("");
@@ -304,13 +168,8 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
     const sWilaya = localStorage.getItem("saoudi_wilaya");
     const sDelegation = localStorage.getItem("saoudi_delegation");
     const sRue = localStorage.getItem("saoudi_rue");
-    if (localStorage.getItem("saoudi_raslen_already_spun") === "true") {
-      setHasAlreadySpun(true);
-    }
-    const sPromo = localStorage.getItem("saoudi_applied_promo");
-    if (sPromo) {
-      try { setAppliedPromo(JSON.parse(sPromo)); } catch(e) {}
-    }
+    localStorage.removeItem("saoudi_raslen_already_spun");
+    localStorage.removeItem("saoudi_applied_promo");
     if (sName) setFormName(sName);
     if (sPhone) setFormPhone(sPhone);
     const sEmail = localStorage.getItem("saoudi_email");
@@ -1557,51 +1416,6 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
 
               {cart.length > 0 && (
                 <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  {/* PROMO / ROULETTE BOX */}
-                  <div className="mb-4 bg-gradient-to-r from-amber-500/10 via-yellow-500/10 to-amber-500/10 border-2 border-gold/40 rounded-xl p-3 shadow-sm">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-black uppercase text-gold flex items-center gap-1.5 tracking-wider">
-                        <i className="fas fa-gift text-sm text-yellow-500"></i> Code Spécial Raslen
-                      </span>
-                      {!appliedPromo && (
-                        <span className="text-[10px] bg-gold text-gray-950 font-bold px-2 py-0.5 rounded-full animate-pulse">
-                          Gagnez jusqu'à -15%
-                        </span>
-                      )}
-                    </div>
-                    {appliedPromo ? (
-                      <div className="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-400 dark:border-emerald-700 rounded-lg p-2.5 flex items-center justify-between text-xs">
-                        <span className="text-emerald-700 dark:text-emerald-300 font-bold flex items-center gap-1.5">
-                          <i className="fas fa-check-circle text-emerald-500"></i>
-                          {appliedPromo.label} appliqué !
-                        </span>
-                        <span className="text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 font-bold px-2 py-0.5 rounded">
-                          Verrouillé 🔒
-                        </span>
-                      </div>
-                    ) : hasAlreadySpun ? (
-                      <div className="bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg p-2.5 text-center text-xs text-gray-500 dark:text-gray-400 font-bold">
-                        Code saoudi_raslen déjà utilisé (1 seule chance par client) 🔒
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <input 
-                          type="text" 
-                          value={promoInput} 
-                          onChange={e => setPromoInput(e.target.value)}
-                          placeholder="Code promo (ex: saoudi_raslen)" 
-                          className="flex-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs outline-none focus:border-gold text-gray-900 dark:text-white font-medium"
-                        />
-                        <button 
-                          type="button"
-                          onClick={() => handleApplyPromo()}
-                          className="bg-gold hover:bg-yellow-500 text-gray-950 text-xs font-black px-3.5 py-2 rounded-lg transition shadow flex items-center gap-1 whitespace-nowrap"
-                        >
-                          <i className="fas fa-dice text-sm"></i> Tourner
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
                   {/* ULTRA VISIBLE CHECKOUT FORM */}
                   <div className="bg-amber-50/70 dark:bg-gray-900/90 border-2 border-gold/70 rounded-2xl p-4 shadow-lg mb-4">
@@ -1824,121 +1638,7 @@ export default function StoreFront({ initialProducts = [], initialBoxes = [] }: 
         </div>
       )}
 
-      {/* ROULETTE DE LA CHANCE MODAL */}
-      {isRouletteOpen && (
-        <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-md p-6 relative border-2 border-gold text-center overflow-hidden">
-            <button 
-              onClick={() => !isSpinning && setIsRouletteOpen(false)} 
-              disabled={isSpinning}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition text-xl disabled:opacity-30"
-            >
-              <i className="fas fa-times"></i>
-            </button>
 
-            <div className="inline-block bg-gold/20 text-gold font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider mb-2">
-              🎁 Code Spécial Raslen
-            </div>
-            <h3 className="text-xl font-black text-gray-900 dark:text-white uppercase mb-1">
-              Roulette de la Chance ! 🎰
-            </h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-              Tournez la roue pour tenter de gagner jusqu'à 15% de réduction ou la livraison gratuite !
-            </p>
-
-            {/* The Wheel */}
-            <div className="relative w-72 h-72 mx-auto my-4 flex items-center justify-center">
-              {/* Top Pointer */}
-              <div className="absolute -top-3 z-30 text-red-500 text-3xl filter drop-shadow">
-                <i className="fas fa-caret-down"></i>
-              </div>
-
-              {/* Outer Ring */}
-              <div className="absolute inset-0 rounded-full border-4 border-gold shadow-2xl pointer-events-none z-20"></div>
-
-              {/* Rotating SVG Wheel */}
-              <div 
-                className="w-full h-full rounded-full overflow-hidden transition-transform ease-out"
-                style={{
-                  transform: `rotate(${rouletteRotation}deg)`,
-                  transitionDuration: isSpinning ? '4.5s' : '0s',
-                  transitionTimingFunction: 'cubic-bezier(0.15, 0.9, 0.2, 1)'
-                }}
-              >
-                <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
-                  {ROULETTE_SLICES.map((slice, i) => {
-                    const startAngle = (i * 45 * Math.PI) / 180;
-                    const endAngle = ((i + 1) * 45 * Math.PI) / 180;
-                    const x1 = 50 + 50 * Math.cos(startAngle);
-                    const y1 = 50 + 50 * Math.sin(startAngle);
-                    const x2 = 50 + 50 * Math.cos(endAngle);
-                    const y2 = 50 + 50 * Math.sin(endAngle);
-                    const pathData = `M 50 50 L ${x1} ${y1} A 50 50 0 0 1 ${x2} ${y2} Z`;
-                    const midAngle = ((i + 0.5) * 45);
-
-                    return (
-                      <g key={i}>
-                        <path d={pathData} fill={slice.bg} stroke="#ffffff" strokeWidth="0.5" />
-                        <g transform={`rotate(${midAngle} 50 50)`}>
-                          <text
-                            x="78"
-                            y="51"
-                            fill={slice.text}
-                            fontSize="4.5"
-                            fontWeight="bold"
-                            textAnchor="middle"
-                            transform="rotate(90 78 51)"
-                          >
-                            {slice.label}
-                          </text>
-                        </g>
-                      </g>
-                    );
-                  })}
-                </svg>
-              </div>
-
-              {/* Center Hub Button */}
-              <button
-                onClick={spinRoulette}
-                disabled={isSpinning || !!appliedPromo || hasAlreadySpun}
-                className="absolute z-20 w-16 h-16 rounded-full bg-gray-900 border-4 border-gold text-gold font-black text-xs uppercase flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition disabled:opacity-80"
-              >
-                {isSpinning ? (
-                  <i className="fas fa-spinner fa-spin text-lg"></i>
-                ) : appliedPromo ? (
-                  "✓ FAIT"
-                ) : (
-                  "SPIN 🎰"
-                )}
-              </button>
-            </div>
-
-            {/* Spin Button below */}
-            <button
-              onClick={spinRoulette}
-              disabled={isSpinning || !!appliedPromo || hasAlreadySpun}
-              className="w-full mt-2 bg-gradient-to-r from-yellow-500 via-gold to-yellow-600 text-gray-950 font-black py-3 rounded-xl shadow-lg hover:brightness-110 active:scale-98 transition uppercase tracking-wider text-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isSpinning ? "La roulette tourne..." : appliedPromo ? `Code Appliqué : ${appliedPromo.label}` : "TOURNER LA ROULETTE ! 🎰"}
-            </button>
-
-            {/* Result popup if won/lost */}
-            {rouletteResultModal && (
-              <div className="mt-4 p-3 rounded-xl bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 animate-fade-in">
-                <p className="font-bold text-sm text-gray-900 dark:text-white mb-1">{rouletteResultModal.text}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">{rouletteResultModal.sub}</p>
-                <button 
-                  onClick={() => { setRouletteResultModal(null); setIsRouletteOpen(false); }}
-                  className="mt-2 text-xs font-bold text-gold underline hover:opacity-80"
-                >
-                  Fermer et voir mon panier
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* BLOC CONFIRMATION COMMANDE EN ARABE TUNISIEN */}
       {orderSuccessData?.show && (

@@ -40,7 +40,6 @@ Spécialiste des montres de haute qualité, parures, colliers, bracelets, bagues
 INFOS BOUTIQUE (À RETENIR PARFAITEMENT) :
 - Livraison : 8.5 DT pour toute la Tunisie (لباب الدار) en 24h à 48h ouvrables.
 - Paiement : Paiement sécurisé à la livraison en espèces (خلاص كاش يد بيد وقت الاستلام).
-- Code Promo Roulette : "saoudi_raslen" (permet de faire tourner la roulette pour gagner 10%, 15% ou la livraison gratuite).
 - WhatsApp : +216 55 211 908
 
 CATALOGUE RÉEL DU SITE (NE JAMAIS INVENTER D'AUTRES PRODUITS) :
@@ -55,7 +54,6 @@ Tu dois parler exactement comme un commerçant tunisien accueillant, poli et com
      * Accueil : "3aslema w mar7ba bik ya ghali(a) fi Saoudi Accessoires! 💎✨", "Ey n3am 3anna...", "Tfadhal 3la 3iniya..."
      * Produits & Qualité : "sal3a lux w khedma ndhifa barcha", "soum tayara", "chba3a w elegance", "to7fa yasser mezyena", "kado ycharref".
      * Livraison : "Livraison l kol blassa fi tounes b 8.5 DT barka (lbab eddar) w touslek fi 24h l 48h. El 5las ki touslek el commande cash mel yed lil yed 🚚"
-     * Code promo : "Matnsach zeda tsta3mel el code 'saoudi_raslen' fil panier bch tdawwer el roulette w terba7 remise 10% wela 15% wela livraison blech! ✨"
      * Appel à l'action : "Anzel 3al produit bch tchouf el tsawer w el les couleurs w t3adi commande mte3ek 😊"
 
 2. SI LE CLIENT PARLE EN ARABE (caractères arabes, ex: "عسلامة عندكم سوايع رجالي؟" ou "بقداش التوصيل؟") :
@@ -63,7 +61,6 @@ Tu dois parler exactement comme un commerçant tunisien accueillant, poli et com
      * "عسلامة وبك مرحبا في Saoudi Accessoires! 💎✨"
      * "أي نعم عندنا تشكيلة مزيانة برشا وسلعة لوكس ونظيفة..."
      * "التوصيل لباب الدار لكل بلاصة في تونس بـ 8.5 د برك في 24 إلى 48 ساعة، والخلاص يد بيد كاش وقت الاستلام 🚚"
-     * "تنجم تستعمل كود 'saoudi_raslen' في السلة باش تدور الروليت وتربح تخفيض 10% ولا 15% ولا توصيل بلاش ✨"
      * "انزل على 'عرض التفاصيل' باش تشوف التصاور والألوان وتعدي كوموندك بسهولة 😊"
 
 3. SI LE CLIENT PARLE EN FRANÇAIS : Réponds en français élégant et accueillant.
@@ -183,7 +180,7 @@ CONSIGNES GÉNÉRALES :
                 } else if (lowerMsg.includes('كادو') || lowerMsg.includes('هدية')) {
                     rawReply = `عسلامة وبك مرحبا! 🎁 كادو يشرّف ومزيان برشا تلقاه عندنا، شوف هاذم من أحسن الاختيارات:\n[SUGGEST_PRODUCTS: 🦢 Collier Femme Cygne avec Pendentif Rose, Pack swam, Montres Couple – Duo Homme & Femme]`;
                 } else if (lowerMsg.includes('توصيل') || lowerMsg.includes('بقداش') || lowerMsg.includes('شحن')) {
-                    rawReply = `التوصيل لباب الدار لكل بلاصة في تونس بـ 8.5 د برك 🚚 (وتقدر تربح توصيل مجاني بكود 'saoudi_raslen' في السلة)! Délai من 24 لـ 48 ساعة والخلاص يد بيد وقت الاستلام 😊`;
+                    rawReply = `التوصيل لباب الدار لكل بلاصة في تونس بـ 8.5 د برك 🚚 في 24 إلى 48 ساعة والخلاص يد بيد وقت الاستلام 😊`;
                 } else {
                     rawReply = `عسلامة وبك مرحبا في Saoudi Accessoires! ✨💎 كيفاش نجم نعاونك اليوم؟ شوف أحسن المنتوجات المقترحة لوطا ولا كلمنا على الواتساب 55211908 216+ !\n[SUGGEST_PRODUCTS: Montre + braclet rolex, Pack swam]`;
                 }
@@ -193,7 +190,7 @@ CONSIGNES GÉNÉRALES :
                 } else if (lowerMsg.includes('cadeau') || lowerMsg.includes('kado')) {
                     rawReply = `3aslema w mar7ba bik! 🎁 Ken t7eb kado ycharref w to7fa, hedhom a7san des packs w bijoux 3anna:\n[SUGGEST_PRODUCTS: 🦢 Collier Femme Cygne avec Pendentif Rose, Pack swam, Montres Couple – Duo Homme & Femme]`;
                 } else if (lowerMsg.includes('livraison') || lowerMsg.includes('frais') || lowerMsg.includes('transport') || lowerMsg.includes('b9adeh')) {
-                    rawReply = `Livraison l kol blassa fi tounes b 8.5 DT barka (lbab eddar) 🚚 w touslek fi 24h l 48h. El 5las cash ki touslek el commande! W matnsach code 'saoudi_raslen' fil panier bch terba7 remise wela livraison blech ✨`;
+                    rawReply = `Livraison l kol blassa fi tounes b 8.5 DT barka (lbab eddar) 🚚 w touslek fi 24h l 48h. El 5las cash ki touslek el commande! ✨`;
                 } else {
                     rawReply = `3aslema w mar7ba bik fi Saoudi Accessoires! ✨💎 Kifech najmou n3awnouk lyoum ? Chouf hedhom men a7san el montoujet 3anna, wela contactina 3al WhatsApp +216 55 211 908 !\n[SUGGEST_PRODUCTS: Montre + braclet rolex, Pack swam]`;
                 }
